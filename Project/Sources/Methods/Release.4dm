@@ -8,13 +8,13 @@ $databaseName:=$config.file.name
 print("...will archive "+$databaseName)
 
 // archive and move it
-var $buildDir : 4D:C1709.File
+var $buildDir : 4D:C1709.Folder
 $buildDir:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).folder(Generate UUID:C1066)
 $buildDir.create()
 
 print("🗃 4dz creation")
 // copy all base to destination
-var $destinationBase : 4D:C1709.File
+var $destinationBase : 4D:C1709.Folder
 $destinationBase:=$databaseFolder.copyTo($buildDir; $databaseName+".4dbase"; fk overwrite:K87:5)
 // remove all sources (could be opt if want to distribute with sources, add an option?)
 cleanProject($destinationBase)
