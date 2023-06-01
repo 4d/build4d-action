@@ -5,6 +5,16 @@ If ($config.options=Null:C1517)
 	$config.options:=New object:C1471()
 End if 
 
+If (Value type:C1509($config.options)=Is text:K8:3)
+	
+	If ((Length:C16($config.options)>1) && (Position:C15("{"; $config.options)=1))
+		$config.options:=JSON Parse:C1218($config.options)
+	Else 
+		$config.options:=New object:C1471
+		//ignore for the moment
+	End if 
+End if 
+
 // adding potential component from folder Components
 If ($config.options.components=Null:C1517)
 	var $databaseFolder : 4D:C1709.Folder
