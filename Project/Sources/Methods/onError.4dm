@@ -22,8 +22,14 @@ End case
 
 $metadata:=$metadata+", line="+String:C10($caller.line)  // is it line in file or line in code???
 
+
+var $handle : 4D:C1709.FileHandle
+$handle:=Folder:C1567(fk database folder:K87:14).file("error").open("write")
+
 var $i : Integer
 For ($i; 1; Size of array:C274($textArray); 1)
 	print("::error "+$metadata+"::"+$textArray{$i})
 	print("error "+$metadata+"::"+$textArray{$i})
+	$handle.writeLine($metadata+"::"+$textArray{$i})
 End for 
+
