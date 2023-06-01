@@ -1,0 +1,35 @@
+# action.yml
+name: 'Build 4D'
+author: 'Eric Marchand'
+branding:
+  icon: 'package'
+  color: 'blue'
+description: 'Build 4D code'
+inputs:
+  project:
+    description: 'Project to build'
+    required: false
+  compilation-options:
+    description: "Some additional compilation options"
+    required: false
+    default: "{}"
+  product-line:
+    description: 'tool4d product line (default 20.x)'
+    required: false
+  version:
+    description: 'tool4d version (default 20.0)'
+    required: false
+  build:
+    description: 'tool4d build number (default latest)'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - id: tool4d
+      uses: e-marchand/tool4d-action@v1
+      with:
+       product-line: "${{ inputs.product-line }}"
+       version: "${{ inputs.version }}"
+       build: "${{ inputs.build }}"
+       project: "${GITHUB_ACTION_PATH}/Project/Compilator.4DProject"
+       user-param: "{'path':'${{ inputs.project }}', 'workingDirectory':'${{ github.workspace }}' ,'options':${{ inputs.compilation-options }}}"
