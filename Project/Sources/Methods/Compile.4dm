@@ -49,12 +49,18 @@ Else
 End if 
 If ($status.errors#Null:C1517)
 	If ($status.errors.length>0)
+		
+		var $handle : 4D:C1709.FileHandle
+		$handle:=Folder:C1567(fk database folder:K87:14).file("error").open("write")
+		
 		print("::group::Compilation errors")
 		var $error : Object
 		For each ($error; $status.errors)
 			cs:C1710.compilationError.new($error).printGithub($config)
+			$handle.writeLine(JSON Stringify:C1217($error))
 		End for each 
 		print("::endgroup::")
+		
 	End if 
 End if 
 
