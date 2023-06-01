@@ -28,8 +28,9 @@ runs:
     - id: tool4d
       uses: e-marchand/tool4d-action@v1
       with:
-       product-line: "${{ inputs.product-line }}"
-       version: "${{ inputs.version }}"
-       build: "${{ inputs.build }}"
-       project: "${GITHUB_ACTION_PATH}/Project/Compilator.4DProject"
-       user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ github.workspace }}", "options": "${{ inputs.compilation-options }}"}'
+        product-line: "${{ inputs.product-line }}"
+        version: "${{ inputs.version }}"
+        build: "${{ inputs.build }}"
+        project: "${GITHUB_ACTION_PATH}/Project/Compilator.4DProject"
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ github.workspace }}", "options": "${{ inputs.compilation-options }}"}'
+        startup-method: onServerStart
