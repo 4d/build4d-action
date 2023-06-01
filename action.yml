@@ -36,3 +36,4 @@ runs:
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/Compilator.4DProject"
         user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ github.workspace }}", "options": "${{ inputs.compilation-options }}"}'
         startup-method: onServerStart
+        error-flag: "${{env.GITHUB_THIS_ACTION_PATH}}/error"
