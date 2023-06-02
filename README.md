@@ -27,3 +27,7 @@ jobs:
       with:
         project: "${{ github.workspace }}/Project/MyProject.4DProject"
 ```
+
+## Example base
+
+Could be found here https://github.com/e-marchand/tool4d-action-test
