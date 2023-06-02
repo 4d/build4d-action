@@ -25,7 +25,10 @@ Case of
 		// check "workingDirectory"
 		If (Length:C16(String:C10($config.workingDirectory))>0)
 			
-			$config.workingDirectory:=Folder:C1567($config.workingDirectory).path  // ensure trailing /
+			
+			print("- workingDirectory: "+String:C10($config.workingDirectory))
+			
+			$config.workingDirectory:=Folder:C1567(String:C10($config.workingDirectory)).path  // ensure trailing /
 			
 		Else 
 			// see env ? any means using 4D?
@@ -52,9 +55,9 @@ Case of
 			If (Is Windows:C1573)
 				
 				$config.relative:=Replace string:C233($config.workingDirectory; $config.path; "")
-				$config.relative:=Replace string:C233($config.relative+"/"; "\\")
+				$config.relative:=Replace string:C233($config.relative; "/"; "\\")
 				
-				$config.path:=$config.workingDirectory.file($config.relative).path
+				$config.path:=Folder:C1567($config.workingDirectory).file($config.relative).path
 				
 			End if 
 			
@@ -71,6 +74,8 @@ Case of
 				print("::error ::project file "+$config.path+" do not exists")
 				
 			Else 
+				
+				print("- path: "+String:C10($config.path))
 				
 				$config.file:=File:C1566($config.path)
 				
