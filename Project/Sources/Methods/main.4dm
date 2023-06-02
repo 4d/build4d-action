@@ -31,7 +31,7 @@ Case of
 			// see env ? any means using 4D?
 			
 			If (Structure file:C489(*)=Structure file:C489())  // this base to test
-				$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2)
+				$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
 			End if 
 			
 		End if 
@@ -42,7 +42,7 @@ Case of
 			// find first file into 
 			If ($config.workingDirectory#Null:C1517)
 				
-				$config.path:=$config.workingDirectory.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path
+				$config.path:=Folder:C1567($config.workingDirectory).folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path
 				
 			End if 
 			
