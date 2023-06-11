@@ -14,14 +14,17 @@ inputs:
     required: false
     default: "{}"
   product-line:
-    description: 'tool4d product line (default 20.x)'
+    description: 'tool4d product line'
     required: false
+    default: "20.x"
   version:
-    description: 'tool4d version (default 20.0)'
+    description: 'tool4d version'
     required: false
+    default: "20.0"
   build:
-    description: 'tool4d build number (default latest)'
+    description: 'tool4d build number'
     required: false
+    default: "latest"
 runs:
   using: 'composite'
   steps:
