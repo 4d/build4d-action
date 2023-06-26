@@ -25,7 +25,7 @@ jobs:
     - name: Build
       uses: e-marchand/build4d-action@main
       with:
-        project: "${{ github.workspace }}/Project/MyProject.4DProject"
+        project: "Project/MyProject.4DProject"
 ```
 
 ## Example base
