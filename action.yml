@@ -28,6 +28,13 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - id: setup
+      name: Setup environment 
+      shell: bash
+      run: |
+        WORKINK_DIRECTORY="${{ github.workspace }}"
+        WORKINK_DIRECTORY=$(echo $WORKINK_DIRECTORY|sed -e 's/\\/\\\\/g') # escape workspace for json
+        echo "WORKINK_DIRECTORY=$WORKINK_DIRECTORY" >> $GITHUB_ENV
     - id: tool4d
       uses: e-marchand/tool4d-action@v1
       env:
@@ -37,6 +44,6 @@ runs:
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/Compilator.4DProject"
-        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ github.workspace }}", "options": "${{ inputs.compilation-options }}"}'
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}"}'
         startup-method: main
         error-flag: "${{env.GITHUB_THIS_ACTION_PATH}}/error"
