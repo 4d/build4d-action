@@ -26,4 +26,4 @@ jobs:
     - name: Build
       uses: e-marchand/build4d-action@main
       with:
-        project: "${{ github.workspace }}/Project/Compilator.4DProject"
+        project: "Project/Compilator.4DProject"
