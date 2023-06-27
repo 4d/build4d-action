@@ -33,7 +33,7 @@ Function startGroup($name : Text)
 	This:C1470.cmd("group"; $name)
 	
 Function endGroup()
-	This:C1470.cmd("endgroup")
+	This:C1470.cmd("endgroup"; "")
 	
 Function group($name : Text; $formula : 4D:C1709.Function)
 	This:C1470.startGroup($name)
@@ -48,7 +48,7 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	If (($parameters#Null:C1517) && Not:C34(OB Is empty:C1297($parameters)))
 		$finalMessage+=" "+OB Entries:C1720($parameters).map(Formula:C1597($1.value.key+"="+String:C10($1.value.value))).join(",")
 	End if 
-	$finalMessage+=" ::"+String:C10($message)+"\n"
+	$finalMessage+="::"+String:C10($message)+"\n"
 	LOG EVENT:C667(Into system standard outputs:K38:9; $finalMessage; $level)
 	
 	
