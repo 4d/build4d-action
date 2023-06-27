@@ -4,7 +4,6 @@ Take you 4D base and compile it.
 
 Convert compilation errors as github annotations.
 
-
 ## Usage
 ```yaml
 name: build
@@ -23,9 +22,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Build
-      uses: e-marchand/build4d-action@main
-      with:
-        project: "Project/MyProject.4DProject"
+      uses: 4d/build4d-action@main
 ```
 
 ## Example base
