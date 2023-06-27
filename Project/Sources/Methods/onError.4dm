@@ -1,5 +1,4 @@
 //%attributes = {}
-
 ARRAY INTEGER:C220($codesArray; 0)
 ARRAY TEXT:C222($intCompArray; 0)
 ARRAY TEXT:C222($textArray; 0)
@@ -8,28 +7,26 @@ GET LAST ERROR STACK:C1015($codesArray; $intCompArray; $textArray)
 var $caller : Object
 $caller:=Get call chain:C1662[1]  // 0 is current method
 
-var $metadata : Text
+var $metadata : Object
+$metadata:=New object:C1471
 Case of 
 	: ($caller.type="projectMethod")
 		// {type:projectMethod,name:onServerStart,line:2,database:Compilator}
-		$metadata:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Method/"+$caller.name+".4dm").path
+		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Method/"+$caller.name+".4dm").path
 	: ($caller.type="classFunction")
-		$metadata:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Classes/"+Substring:C12($caller.name; 1; Position:C15(":"; $caller.name)-1)+".4dm").path
+		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Classes/"+Substring:C12($caller.name; 1; Position:C15("."; $caller.name)-1)+".4dm").path
 	Else 
-		$metadata:=""
-		// not yet implemented (like db method, form method)
+		// TODO: not yet implemented (like db method, form method)
 End case 
 
-$metadata:=$metadata+", line="+String:C10($caller.line)  // is it line in file or line in code???
+$metadata.line:=String:C10($caller.line)  // is it line in file or line in code???
 
+SetErrorStatus()
 
-var $handle : 4D:C1709.FileHandle
-$handle:=Folder:C1567(fk database folder:K87:14).file("error").open("write")
+var $logger : cs:C1710.logger
+$logger:=cs:C1710.logger.new()
 
 var $i : Integer
 For ($i; 1; Size of array:C274($textArray); 1)
-	print("::error "+$metadata+"::"+$textArray{$i})
-	print("error "+$metadata+"::"+$textArray{$i})
-	$handle.writeLine($metadata+"::"+$textArray{$i})
+	$logger.error($textArray{$i}; $metadata)
 End for 
-

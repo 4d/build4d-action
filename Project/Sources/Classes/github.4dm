@@ -1,5 +1,6 @@
-Class constructor
+Class constructor($logger : cs:C1710.logger)
 	This:C1470._parseEnv()
+	This:C1470.logger:=$logger
 	
 Function _parseEnv()
 	var $in; $out; $err : Text
@@ -36,7 +37,7 @@ Function postArtefact($artefact : 4D:C1709.File)->$result : Object
 		Else 
 			var $uploadURL : Text
 			$uploadURL:="https://uploads.github.com/repos/"+String:C10(This:C1470["GITHUB_REPOSITORY"])+"/releases/"+String:C10(This:C1470.event.release.id)+"/assets?name="+String:C10($artefact.fullName)
-			print("...using url "+$uploadURL)
+			This:C1470.logger.info("...using url "+$uploadURL)
 			
 			ARRAY TEXT:C222($headerNames; 3)
 			ARRAY TEXT:C222($headerValues; 3)
