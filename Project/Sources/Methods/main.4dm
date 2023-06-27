@@ -72,7 +72,13 @@ Else
 			
 		End if 
 		
-		$config.file:=Folder:C1567($config.workingDirectory).file($config.path)
+		If (Is Windows:C1573)
+			$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory; fk platform path:K87:2)
+		Else 
+			$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory)
+		End if 
+		
+		$config.file:=$config.workingDirectoryFolder.file($config.path)
 		If ($config.file#Null:C1517)
 			$config.path:=$config.file.path
 		End if 
