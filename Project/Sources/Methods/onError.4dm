@@ -23,7 +23,7 @@ $metadata.line:=String:C10($caller.line)  // is it line in file or line in code?
 
 var $i : Integer
 For ($i; 1; Size of array:C274($textArray); 1)
-	Storage:C1525.logger.error($textArray{$i}; $metadata)
+	Storage:C1525.github.error($textArray{$i}; $metadata)
 End for 
 
 SetErrorStatus()

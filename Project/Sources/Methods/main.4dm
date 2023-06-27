@@ -1,7 +1,7 @@
 //%attributes = {}
 
 Use (Storage:C1525)
-	Storage:C1525.logger:=OB Copy:C1225(cs:C1710.logger.new(); ck shared:K85:29)
+	Storage:C1525.github:=OB Copy:C1225(cs:C1710.github.new(); ck shared:K85:29)
 End use 
 
 ON ERR CALL:C155("onError")  // ignore all, do not want to block CI
@@ -14,25 +14,27 @@ If (Length:C16($startupParam)=0)
 	If (Structure file:C489(*)=Structure file:C489())  // dev
 		$startupParam:="{}"
 	Else 
-		Storage:C1525.logger.error("No parameters passed to database")
+		Storage:C1525.github.error("No parameters passed to database")
 		return 
 	End if 
 End if 
 
-Storage:C1525.logger.info("...parsing parameters")
+Storage:C1525.github.info("...parsing parameters")
 
 var $config : Object
 $config:=JSON Parse:C1218($startupParam)
 
-$config.logger:=Storage:C1525.logger
-Use ($config.logger)
-	$config.logger.debug:=Bool:C1537($config.debug)
+If (Value type:C1509($config.debug)=Is integer:K8:5)
+	$config.debug:=($config.debug=1)
+End if 
+Use (Storage:C1525.github)
+	Storage:C1525.github.debug:=Bool:C1537($config.debug)
 End use 
 
 // check "workingDirectory"
 If (Length:C16(String:C10($config.workingDirectory))>0)
 	
-	$config.logger.info("workingDirectory="+String:C10($config.workingDirectory))
+	Storage:C1525.github.debug("workingDirectory="+String:C10($config.workingDirectory))
 	
 Else 
 	// CLEAN: see env var ? any means using 4D?
@@ -109,19 +111,19 @@ End if */
 Case of 
 	: (Length:C16(String:C10($config.path))=0)
 		
-		$config.logger.error("no correct project file path provided")
+		Storage:C1525.github.error("no correct project file path provided")
 		
 	: (Not:C34(File:C1566($config.path).exists))
 		
-		$config.logger.error("project file "+$config.path+" do not exists")
+		Storage:C1525.github.error("project file "+$config.path+" do not exists")
 		
 	Else 
 		
-		$config.logger.info("path="+String:C10($config.path))
+		Storage:C1525.github.debug("path="+String:C10($config.path))
 		
 		$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
 		
-		$config.logger.info("...will execute actions: "+$config.actions.join(","))
+		Storage:C1525.github.debug("...will execute actions: "+$config.actions.join(","))
 		
 		var $actions : cs:C1710.actions
 		$actions:=cs:C1710.actions.new($config)
@@ -132,9 +134,10 @@ Case of
 		var $action : Text
 		For each ($action; $config.actions) Until (Not:C34($status.success))
 			If ((OB Instance of:C1731($actions[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1))
+				Storage:C1525.github.notice("action "+$action)
 				$status:=$actions[$action].call($actions)
 			Else 
-				$config.logger.error("Unknown action "+$action)
+				Storage:C1525.github.error("Unknown action "+$action)
 				$status.success:=False:C215
 			End if 
 		End for each 

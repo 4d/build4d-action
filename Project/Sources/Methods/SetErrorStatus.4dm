@@ -8,7 +8,7 @@ ON ERR CALL:C155("")
 If (Folder:C1567(fk database folder:K87:14).file("error").isWritable)
 	Folder:C1567(fk database folder:K87:14).file("error").setText("")  // FIXME: Issue if readonly path
 Else 
-	Storage:C1525.logger.warning("Cannot write to error flag file")
+	Storage:C1525.github.warning("Cannot write to error flag file")
 End if 
 
 ON ERR CALL:C155($text)

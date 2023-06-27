@@ -22,7 +22,7 @@ Function build()->$status : Object
 		var $databaseFolder : 4D:C1709.Folder
 		$databaseFolder:=$config.file.parent.parent
 		If ($databaseFolder.folder("Components").exists)
-			$config.logger.info("...adding dependencies")
+			Storage:C1525.github.info("...adding dependencies")
 			$config.options.components:=New collection:C1472
 			var $dependency : 4D:C1709.Folder
 			For each ($dependency; $databaseFolder.folder("Components").folders())
@@ -33,19 +33,19 @@ Function build()->$status : Object
 		End if 
 	End if 
 	
-	$config.logger.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
+	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
 	
 	$status:=Compile project:C1760($config.file; $config.options)
 	
 	// report final status
 	If ($status.success)
 		If (($status.errors#Null:C1517) && ($status.errors.length>0))
-			$config.logger.warning("⚠️ Build success with warnings")
+			Storage:C1525.github.warning("⚠️ Build success with warnings")
 		Else 
-			$config.logger.info("✅ Build success")
+			Storage:C1525.github.notice("✅ Build success")
 		End if 
 	Else 
-		$config.logger.error("‼️ Build failure")
+		Storage:C1525.github.error("‼️ Build failure")
 	End if 
 	
 	// report errors
@@ -54,14 +54,14 @@ Function build()->$status : Object
 		var $handle : 4D:C1709.FileHandle
 		$handle:=Folder:C1567(fk database folder:K87:14).file("error").open("write")
 		
-		$config.logger.cmd("group"; "Compilation errors")
+		Storage:C1525.github.startGroup("Compilation errors")
 		
 		var $error : Object
 		For each ($error; $status.errors)
 			This:C1470._reportCompilationError($error)
 		End for each 
 		
-		$config.logger.cmd("endgroup"; "")
+		Storage:C1525.github.endGroup()
 		
 	End if 
 	
@@ -90,7 +90,7 @@ Function _reportCompilationError($error : Object)
 	$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; $config.workingDirectory; "")
 	
 	// github action cmd
-	$config.logger.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
+	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
 	
 	// MARK:- release
 	
@@ -102,14 +102,14 @@ Function release()->$status : Object
 	$databaseFolder:=$config.file.parent.parent
 	var $databaseName : Text
 	$databaseName:=$config.file.name
-	$config.logger.info("...will archive "+$databaseName)
+	Storage:C1525.github.info("...will archive "+$databaseName)
 	
 	// archive and move it
 	var $buildDir : 4D:C1709.Folder
 	$buildDir:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).folder(Generate UUID:C1066)
 	$buildDir.create()
 	
-	$config.logger.info("🗃 4dz creation")
+	Storage:C1525.github.info("🗃 4dz creation")
 	// copy all base to destination
 	var $destinationBase : 4D:C1709.Folder
 	$destinationBase:=$databaseFolder.copyTo($buildDir; $databaseName+".4dbase"; fk overwrite:K87:5)
@@ -122,32 +122,31 @@ Function release()->$status : Object
 	$destinationBase.folder("Project").delete(Delete with contents:K24:24)
 	// XXX could clean also logs, pref etc.. but must not be in vcs...
 	If (Not:C34($status.success))
-		$config.logger.error("error when creating 4z:"+String:C10($status.statusText))
+		Storage:C1525.github.error("error when creating 4z:"+String:C10($status.statusText))
 	End if 
 	
 	If ($status.success)
 		// the 4d base
-		$config.logger.info("📦 final archive creation")
+		Storage:C1525.github.info("📦 final archive creation")
 		var $artefact : 4D:C1709.File
 		$artefact:=$buildDir.file($databaseName+".zip")
 		$status:=ZIP Create archive:C1640($destinationBase; $artefact)
 		If (Not:C34($status.success))
-			$config.logger.error("error when creating archive:"+String:C10($status.statusText))
+			Storage:C1525.github.error("error when creating archive:"+String:C10($status.statusText))
 		End if 
 	End if 
 	
 	If ($status.success)
 		// Send to release
-		$config.logger.info("🚀 send archive to release")
+		Storage:C1525.github.info("🚀 send archive to release")
 		var $github : Object
-		$github:=cs:C1710.github.new($config.logger)
-		$status:=$github.postArtefact($artefact)
+		$status:=Storage:C1525.github.postArtefact($artefact)
 		If (Not:C34($status.success))
-			$config.logger.error("error when pusing artifact to release:"+String:C10($status.statusText))
+			Storage:C1525.github.error("error when pusing artifact to release:"+String:C10($status.statusText))
 		End if 
 	End if 
 	
-	$config.logger.info("🧹 cleaning release working directory")
+	Storage:C1525.github.info("🧹 cleaning release working directory")
 	$buildDir.delete(Delete with contents:K24:24)
 	
 Function _cleanProject($base : 4D:C1709.Folder)
