@@ -82,7 +82,7 @@ Function _reportCompilationError($error : Object)
 	$config:=This:C1470.config
 	
 	var $cmd : Text
-	$cmd:=Choose:C955(Bool:C1537($error.isError); "error"; "warning")
+	$cmd:=Bool:C1537($error.isError) ? "error" : "warning"
 	
 	var $lineContent : Text
 	$lineContent:=Split string:C1554($error.code.file.getText("UTF-8"; Document with LF:K24:22); "\n")[$error.lineInFile-1]
@@ -92,6 +92,10 @@ Function _reportCompilationError($error : Object)
 	
 	// github action cmd
 	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
+	
+	If (Bool:C1537($error.isError))
+		SetErrorStatus
+	End if 
 	
 	// MARK:- release
 	
