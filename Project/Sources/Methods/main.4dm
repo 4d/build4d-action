@@ -57,16 +57,25 @@ If (Length:C16(String:C10($config.path))=0)
 	
 Else 
 	
-	// ensure not a mixed path with \ and / due to window full path + posix relative path of project ie be tolerant
-	If (Is Windows:C1573)
+	If (Not:C34(File:C1566($config.path).exists))
 		
-		$config.relative:=Replace string:C233($config.workingDirectory; $config.path; "")
-		$config.relative:=Replace string:C233($config.relative; "/"; "\\")
-		If (Position:C15("\\"; $config.relative)=1)
-			$config.relative:=Delete string:C232($config.relative; 1; 1)
+		$config.relative:=$config.path
+		
+		// ensure not a mixed path with \ and / due to window full path + posix relative path of project ie be tolerant
+		If (Is Windows:C1573)
+			
+			$config.relative:=Replace string:C233($config.workingDirectory; $config.path; "")
+			$config.relative:=Replace string:C233($config.relative; "/"; "\\")
+			If (Position:C15("\\"; $config.relative)=1)
+				$config.relative:=Delete string:C232($config.relative; 1; 1)
+			End if 
+			
 		End if 
 		
-		$config.path:=Folder:C1567($config.workingDirectory).file($config.relative).path
+		$config.file:=Folder:C1567($config.workingDirectory).file($config.path)
+		If ($config.file#Null:C1517)
+			$config.path:=$config.file.path
+		End if 
 		
 	End if 
 	
