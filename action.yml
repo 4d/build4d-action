@@ -37,6 +37,8 @@ runs:
         echo "WORKINK_DIRECTORY=$WORKINK_DIRECTORY" >> $GITHUB_ENV
         if [[ -z "${RUNNER_DEBUG}" ]]; then
            echo "RUNNER_DEBUG=0" >> $GITHUB_ENV
+        else
+           echo "RUNNER_DEBUG=$RUNNER_DEBUG" >> $GITHUB_ENV
         fi
     - id: tool4d
       uses: 4d/tool4d-action@v1
