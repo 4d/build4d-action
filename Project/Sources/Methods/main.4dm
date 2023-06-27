@@ -27,8 +27,12 @@ $config:=JSON Parse:C1218($startupParam)
 If (Value type:C1509($config.debug)=Is integer:K8:5)
 	$config.debug:=($config.debug=1)
 End if 
+If (Structure file:C489(*)=Structure file:C489())  // this base to test
+	$config.debug:=True:C214
+End if 
+
 Use (Storage:C1525.github)
-	Storage:C1525.github.debug:=Bool:C1537($config.debug)
+	Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
 End use 
 
 // check "workingDirectory"

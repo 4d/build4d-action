@@ -1,5 +1,5 @@
 Class constructor
-	This:C1470.debug:=False:C215
+	This:C1470.isDebug:=False:C215
 	
 	// MARK:-  log
 Function info($message : Text)
@@ -16,7 +16,7 @@ Function warning($message : Text; $parameters : Object)
 	This:C1470.cmd("warning"; $message+"\n"; Warning message:K38:2; $parameters)
 	
 Function debug($message : Text; $parameters : Object)
-	If (This:C1470.debug)
+	If (This:C1470.isDebug)
 		This:C1470.cmd("debug"; $message+"\n"; Information message:K38:1; $parameters)
 	End if 
 	
