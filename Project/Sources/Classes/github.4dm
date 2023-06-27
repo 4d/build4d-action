@@ -76,9 +76,53 @@ Function _parseEnv()->$env : Object
 	
 	If ($env["GITHUB_EVENT_PATH"]#Null:C1517)
 		var $eventFile : 4D:C1709.File
-		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10(This:C1470["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10(This:C1470["GITHUB_EVENT_PATH"]))
+		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10($env["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10($env["GITHUB_EVENT_PATH"]))
 		$env.event:=JSON Parse:C1218($eventFile.getText())
 	End if 
+	
+	// MARK:- file
+Function addEnv($key : Text; $value : Text)
+	This:C1470._write("GITHUB_ENV"; $key+"="+$value)
+	
+Function addOutput($key : Text; $value : Text)
+	This:C1470._write("GITHUB_OUTPUT"; $key+"="+$value)
+	
+Function addToPath($path : Text)
+	This:C1470._write("GITHUB_PATH"; $path)
+	
+Function addToSummary($markdown : Text)
+	This:C1470._write("GITHUB_STEP_SUMMARY"; $markdown)
+	
+Function setSummary($markdown : Text)
+	This:C1470._write("GITHUB_STEP_SUMMARY"; $markdown; True:C214)
+	
+Function _write($key : Text; $value : Text; $replace : Boolean)
+	var $env : Object
+	$env:=This:C1470._parseEnv()
+	
+	var $filePath : Text
+	var $file : 4D:C1709.File
+	var $handle : 4D:C1709.FileHandle
+	
+	$filePath:=String:C10($env[$key])
+	
+	If (Length:C16($filePath)>0)
+		$file:=File:C1566($filePath)  // TODO: test on window if platorm path
+		
+		If (Bool:C1537($replace))
+			$file.setText($value)
+		Else 
+			$handle:=$file.open("append")
+			$handle.writeLine($value)
+			// $handle.close()
+		End if 
+		
+	Else 
+		
+		This:C1470.warning("env "+$key+" nto defined")
+		
+	End if 
+	
 	
 	// MARK:- artefact
 Function postArtefact($artefact : 4D:C1709.File)->$result : Object
@@ -92,7 +136,7 @@ Function postArtefact($artefact : 4D:C1709.File)->$result : Object
 			$result:=New object:C1471("success"; False:C215; "statusText"; "No token to upload release.")
 		: (Length:C16(String:C10($env["GITHUB_REPOSITORY"]))=0)
 			$result:=New object:C1471("success"; False:C215; "statusText"; "No GITHUB_REPOSITORY defined.")
-		: (This:C1470.event=Null:C1517)
+		: ($env.event=Null:C1517)
 			$result:=New object:C1471("success"; False:C215; "statusText"; "No github event data to extract release id.")
 		: (Length:C16(String:C10($env.event.release.id))=0)
 			$result:=New object:C1471("success"; False:C215; "statusText"; "No release id in event.")

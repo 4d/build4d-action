@@ -35,6 +35,9 @@ runs:
         WORKINK_DIRECTORY="${{ github.workspace }}"
         WORKINK_DIRECTORY=$(echo $WORKINK_DIRECTORY|sed -e 's/\\/\\\\/g') # escape workspace for json
         echo "WORKINK_DIRECTORY=$WORKINK_DIRECTORY" >> $GITHUB_ENV
+        if [[ -z "${RUNNER_DEBUG}" ]]; then
+           echo "RUNNER_DEBUG=0" >> $GITHUB_ENV
+        fi
     - id: tool4d
       uses: 4d/tool4d-action@v1
       env:
@@ -44,6 +47,6 @@ runs:
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
-        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}" , "debug": ${{ env.RUNNER_DEBUG }}}'
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}" , "debug": ${{ env.RUNNER_DEBUG }} }'
         startup-method: main
         error-flag: "${{env.GITHUB_THIS_ACTION_PATH}}/error"
