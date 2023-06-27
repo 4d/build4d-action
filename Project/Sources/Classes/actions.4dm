@@ -27,6 +27,7 @@ Function build()->$status : Object
 			var $dependency : 4D:C1709.Folder
 			For each ($dependency; $databaseFolder.folder("Components").folders())
 				If ($dependency.file($dependency.name+".4DZ").exists)
+					Storage:C1525.github.info("Dependency found "+$dependency.name)
 					$config.options.components.push($dependency.file($dependency.name+".4DZ"))
 				End if 
 			End for each 

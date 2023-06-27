@@ -13,7 +13,7 @@ Function error($message : Text; $parameters : Object)
 	SetErrorStatus()
 	
 Function warning($message : Text; $parameters : Object)
-	This:C1470.cmd("warning"; $message+"\n"; Warning message:K38:2; $parameters)
+	This:C1470.cmd("warning"; $message+"\n"; Information message:K38:1/*Warning message*/; $parameters)
 	
 Function debug($message : Text; $parameters : Object)
 	If (This:C1470.isDebug)
