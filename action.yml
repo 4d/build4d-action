@@ -36,7 +36,7 @@ runs:
         WORKINK_DIRECTORY=$(echo $WORKINK_DIRECTORY|sed -e 's/\\/\\\\/g') # escape workspace for json
         echo "WORKINK_DIRECTORY=$WORKINK_DIRECTORY" >> $GITHUB_ENV
     - id: tool4d
-      uses: e-marchand/tool4d-action@v1
+      uses: 4d/tool4d-action@v1
       env:
         GITHUB_THIS_ACTION_PATH: ${{ github.action_path }}
       with:
