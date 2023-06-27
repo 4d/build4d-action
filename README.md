@@ -1,6 +1,6 @@
 # build4d-action
 
-Take you 4D base and compile it.
+[![build](https://github.com/4d/build4d-action/actions/workflows/build.yml/badge.svg)](https://github.com/4d/build4d-action/actions/workflows/build.yml)Take you 4D base and compile it.
 
 Convert compilation errors as github annotations.
 
