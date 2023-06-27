@@ -21,12 +21,15 @@ End case
 
 $metadata.line:=String:C10($caller.line)  // is it line in file or line in code???
 
-var $logger : cs:C1710.logger
-$logger:=cs:C1710.logger.new()
-
 var $i : Integer
 For ($i; 1; Size of array:C274($textArray); 1)
-	$logger.error($textArray{$i}; $metadata)
+	Storage:C1525.logger.error($textArray{$i}; $metadata)
 End for 
 
 SetErrorStatus()
+
+If (Structure file:C489(*)=Structure file:C489())  // dev
+	TRACE:C157
+Else 
+	QUIT 4D:C291
+End if 

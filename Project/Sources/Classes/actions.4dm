@@ -90,7 +90,7 @@ Function _reportCompilationError($error : Object)
 	$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; $config.workingDirectory; "")
 	
 	// github action cmd
-	$config.logger.cmd($cmd; String:C10($error.message); New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
+	$config.logger.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
 	
 	// MARK:- release
 	

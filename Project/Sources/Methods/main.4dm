@@ -1,34 +1,38 @@
 //%attributes = {}
+
+Use (Storage:C1525)
+	Storage:C1525.logger:=OB Copy:C1225(cs:C1710.logger.new(); ck shared:K85:29)
+End use 
+
 ON ERR CALL:C155("onError")  // ignore all, do not want to block CI
 
 var $r : Real
 var $startupParam : Text
 $r:=Get database parameter:C643(User param value:K37:94; $startupParam)
 
-var $logger : cs:C1710.logger
-$logger:=cs:C1710.logger.new()
-
 If (Length:C16($startupParam)=0)
 	If (Structure file:C489(*)=Structure file:C489())  // dev
 		$startupParam:="{}"
 	Else 
-		$logger.error("No parameters passed to database")
+		Storage:C1525.logger.error("No parameters passed to database")
 		return 
 	End if 
 End if 
 
-$logger.info("...parsing parameters")
+Storage:C1525.logger.info("...parsing parameters")
 
 var $config : Object
 $config:=JSON Parse:C1218($startupParam)
 
-$config.logger:=$logger
-$config.logger.debug:=Bool:C1537($config.debug)
+$config.logger:=Storage:C1525.logger
+Use ($config.logger)
+	$config.logger.debug:=Bool:C1537($config.debug)
+End use 
 
 // check "workingDirectory"
 If (Length:C16(String:C10($config.workingDirectory))>0)
 	
-	$config.logger.info("- workingDirectory: "+String:C10($config.workingDirectory))
+	$config.logger.info("workingDirectory="+String:C10($config.workingDirectory))
 	
 Else 
 	// CLEAN: see env var ? any means using 4D?
@@ -113,7 +117,7 @@ Case of
 		
 	Else 
 		
-		$config.logger.info("- path: "+String:C10($config.path))
+		$config.logger.info("path="+String:C10($config.path))
 		
 		$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
 		
