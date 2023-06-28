@@ -25,6 +25,10 @@ Function build()->$status : Object
 	If ($config.options.components=Null:C1517)
 		var $databaseFolder : 4D:C1709.Folder
 		$databaseFolder:=$config.file.parent.parent
+		
+		//var $dependencies : Collection
+		//$dependencies:=This._getDependenciesFor($databaseFolder)
+		
 		If ($databaseFolder.folder("Components").exists)
 			Storage:C1525.github.info("...adding dependencies")
 			$config.options.components:=New collection:C1472
@@ -52,6 +56,7 @@ Function build()->$status : Object
 			End for each 
 		End if 
 	End if 
+	// XXX: maybe check if all dep fullfilled to warn        
 	
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
 	
@@ -65,11 +70,14 @@ Function build()->$status : Object
 	If ($status.success)
 		If (($status.errors#Null:C1517) && ($status.errors.length>0))
 			Storage:C1525.github.warning("⚠️ Build success with warnings")
+			Storage:C1525.github.setSummary("## ⚠️ Build success with warnings")
 		Else 
 			Storage:C1525.github.notice("✅ Build success")
+			Storage:C1525.github.setSummary("## ✅ Build success")
 		End if 
 	Else 
 		Storage:C1525.github.error("‼️ Build failure")
+		Storage:C1525.github.setSummary("## ‼️ Build failure")
 	End if 
 	
 	// report errors
@@ -119,6 +127,18 @@ Function _reportCompilationError($error : Object)
 	If (Bool:C1537($error.isError))
 		SetErrorStatus
 	End if 
+	
+Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collection
+	
+	$dependencies:=New collection:C1472
+	Case of 
+		: ($folder.file("make.json").exists)
+			var $data : Object
+			$data:=JSON Parse:C1218($folder.file("make.json").getText())
+			If (Value type:C1509($data.components)=Is collection:K8:32)
+				$dependencies:=$data.components
+			End if 
+	End case 
 	
 	// MARK:- release
 	
