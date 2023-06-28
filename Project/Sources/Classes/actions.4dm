@@ -17,6 +17,10 @@ Function build()->$status : Object
 		$config.options:=New object:C1471()
 	End if 
 	
+	var $dependencyFile : 4D:C1709.File
+	var $temp4DZs : Collection
+	$temp4DZs:=New collection:C1472
+	
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
 		var $databaseFolder : 4D:C1709.Folder
@@ -27,9 +31,24 @@ Function build()->$status : Object
 			var $dependency : 4D:C1709.Folder
 			For each ($dependency; $databaseFolder.folder("Components").folders())
 				If ($dependency.file($dependency.name+".4DZ").exists)
-					Storage:C1525.github.info("Dependency found "+$dependency.name)
+					Storage:C1525.github.info("Dependency archive found "+$dependency.name)
 					$config.options.components.push($dependency.file($dependency.name+".4DZ"))
 				End if 
+				If ($dependency.extension=".4dbase")
+					// XXX: maybe compile too if not yet (but will not work if not done in correct order)
+					
+					If ($dependency.folder("Project/DerivedData/CompiledCode").exists)
+						$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
+						$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
+						Storage:C1525.github.info("Dependency folder found "+$dependency.name)
+						$config.options.components.push($dependencyFile)
+						$temp4DZs.push($dependencyFile)
+					End if 
+				End if 
+			End for each 
+			
+			For each ($dependencyFile; $databaseFolder.folder("Components").files().filter(Formula:C1597($1.value.extension=".4DZ")))
+				$config.options.components.push($dependencyFile)
 			End for each 
 		End if 
 	End if 
@@ -37,6 +56,10 @@ Function build()->$status : Object
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
 	
 	$status:=Compile project:C1760($config.file; $config.options)
+	
+	For each ($dependencyFile; $temp4DZs)
+		$dependencyFile.delete()
+	End for each 
 	
 	// report final status
 	If ($status.success)
