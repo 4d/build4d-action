@@ -6,11 +6,11 @@ $text:=Method called on error:C704
 
 ON ERR CALL:C155("")
 If (Not:C34(Bool:C1537(Storage:C1525.exit.failure)))
-	Use (Storage:C1525)
-		Storage:C1525.exit:=New shared object:C1526("failure"; True:C214)
+	Use (Storage:C1525.exit)
+		Storage:C1525.exit.failure:=True:C214
 	End use 
-	If (Folder:C1567(fk database folder:K87:14).file("error").isWritable)
-		Folder:C1567(fk database folder:K87:14).file("error").setText("")  // FIXME: Issue if readonly path
+	If (File:C1566(Storage:C1525.exit.errorFlag).isWritable)  // Issue if readonly paths
+		File:C1566(Storage:C1525.exit.errorFlag).setText("")
 	Else 
 		Storage:C1525.github.warning("Cannot write to error flag file")
 	End if 

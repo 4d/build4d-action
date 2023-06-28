@@ -40,6 +40,7 @@ runs:
         else
            echo "RUNNER_DEBUG=$RUNNER_DEBUG" >> $GITHUB_ENV
         fi
+        echo "ERROR_FLAG=${{ runner.temp }}/error_flag" >> $GITHUB_ENV
     - id: tool4d
       uses: 4d/tool4d-action@v1
       env:
@@ -49,6 +50,6 @@ runs:
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
-        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}" , "debug": ${{ env.RUNNER_DEBUG }} }'
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}" , "debug": ${{ env.RUNNER_DEBUG }}, "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
-        error-flag: "${{env.GITHUB_THIS_ACTION_PATH}}/error"
+        error-flag: "${{env.ERROR_FLAG}}"

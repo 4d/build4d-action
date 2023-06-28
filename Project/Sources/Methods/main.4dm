@@ -2,6 +2,7 @@
 
 Use (Storage:C1525)
 	Storage:C1525.github:=OB Copy:C1225(cs:C1710.github.new(); ck shared:K85:29)
+	Storage:C1525.exit:=New shared object:C1526("errorFlag"; Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("error").path)
 End use 
 
 ON ERR CALL:C155("onError")  // ignore all, do not want to block CI
@@ -23,7 +24,9 @@ Storage:C1525.github.info("...parsing parameters")
 
 var $config : Object
 $config:=JSON Parse:C1218($startupParam)
-
+Use (Storage:C1525.exit)
+	Storage:C1525.exit.errorFlag:=String:C10($config.errorFlag)
+End use 
 If (Value type:C1509($config.debug)=Is integer:K8:5)
 	$config.debug:=($config.debug=1)
 End if 
