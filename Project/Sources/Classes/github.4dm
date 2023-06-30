@@ -119,7 +119,7 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 		
 	Else 
 		
-		This:C1470.warning("env "+$key+" nto defined")
+		This:C1470.warning("env var "+$key+" not defined (as file path to write)")
 		
 	End if 
 	

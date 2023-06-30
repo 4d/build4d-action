@@ -5,3 +5,5 @@ DerivedData
 userPreferences.*
 error
 Components/*
+tool4d/*
+tool4d.*
