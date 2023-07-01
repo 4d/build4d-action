@@ -83,9 +83,6 @@ Function build()->$status : Object
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
 		
-		var $handle : 4D:C1709.FileHandle
-		$handle:=Folder:C1567(fk database folder:K87:14).file("error").open("write")
-		
 		Storage:C1525.github.startGroup("Compilation errors")
 		
 		var $error : Object
@@ -125,7 +122,7 @@ Function _reportCompilationError($error : Object)
 	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
 	
 	If (Bool:C1537($error.isError))
-		SetErrorStatus
+		SetErrorStatus("compilationError")
 	End if 
 	
 Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collection

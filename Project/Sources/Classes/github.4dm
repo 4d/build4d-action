@@ -1,19 +1,23 @@
 Class constructor
 	This:C1470.isDebug:=False:C215
+	This:C1470.isDev:=Structure file:C489(*)=Structure file:C489()
 	
 	// MARK:-  log
 Function info($message : Text)
 	LOG EVENT:C667(Into system standard outputs:K38:9; $message+"\n"; Information message:K38:1)
+	If (This:C1470.isDev)
+		LOG EVENT:C667(Into 4D debug message:K38:5; $message+"\n"; Information message:K38:1)
+	End if 
 	
 Function notice($message : Text; $parameters : Object)
 	This:C1470.cmd("notice"; $message+"\n"; Information message:K38:1; $parameters)
 	
 Function error($message : Text; $parameters : Object)
 	This:C1470.cmd("error"; $message+"\n"; Error message:K38:3; $parameters)
-	SetErrorStatus()
+	SetErrorStatus("errorLog")
 	
 Function warning($message : Text; $parameters : Object)
-	This:C1470.cmd("warning"; $message+"\n"; Information message:K38:1/*Warning message*/; $parameters)
+	This:C1470.cmd("warning"; $message+"\n"; Information message:K38:1/*Warning message, to test*/; $parameters)
 	
 Function debug($message : Text; $parameters : Object)
 	If (This:C1470.isDebug)
@@ -50,7 +54,9 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	End if 
 	$finalMessage+="::"+String:C10($message)+"\n"
 	LOG EVENT:C667(Into system standard outputs:K38:9; $finalMessage; $level)
-	
+	If (This:C1470.isDev)
+		LOG EVENT:C667(Into 4D debug message:K38:5; $finalMessage+"\n"; $level)
+	End if 
 	
 	// MARK:- process
 	
