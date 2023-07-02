@@ -9,10 +9,28 @@ inputs:
   project:
     description: 'Project to build'
     required: false
-  compilation-options:
-    description: "Some additional compilation options"
+
+  targets:
+    description: "Possible values: \"x86_64_generic\", \"arm64_macOS_lib\" if macOS"
     required: false
-    default: "{}"
+    default: "[]"
+  type-inference:
+    description: "String	\"all\": Type all variables,\n  \"locals\": Process and interprocess are typed,\n  \"none\": \"All variables are typed\""
+    required: false
+    default: "none"
+  generate-symbols:
+    description: "true to generate symbol information in the .symbols returned object"
+    required: false
+    default: "False"
+  generate-typing-methods:   
+    description: "\"reset\" or \"append\" to generate typing methods.\nIf value is \"append\", existing variable declarations won't be modified (compiler window behavior).\nIf value is \"reset\" existing variable declarations are removed beforehand."
+    required: false
+    default: "False"
+  ignore-warnings:   
+    description: "Never display compilation warnings."
+    required: false
+    default: "False"
+
   product-line:
     description: 'tool4d product line'
     required: false
@@ -50,6 +68,8 @@ runs:
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
-        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", "options": "${{ inputs.compilation-options }}" , "debug": ${{ env.RUNNER_DEBUG }}, "errorFlag": "${{ env.ERROR_FLAG }}" }'
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", \
+         "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , \
+         "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarning": "${{ inputs.ignore-warnings }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"

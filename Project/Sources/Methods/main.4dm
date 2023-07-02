@@ -30,12 +30,14 @@ If (Length:C16(String:C10($config.errorFlag))>0)
 	End use 
 End if 
 
-If (Value type:C1509($config.debug)=Is integer:K8:5)
-	$config.debug:=($config.debug=1)
+If ($config.debug#Null:C1517)
+	$config.debug:=isTruthly($config.debug)
 End if 
 If (Structure file:C489(*)=Structure file:C489())  // this base to test
 	$config.debug:=True:C214
 End if 
+
+$config.ignoreWarnings:=isTruthly($config.ignoreWarnings)
 
 Use (Storage:C1525.github)
 	Storage:C1525.github.isDebug:=Bool:C1537($config.debug)

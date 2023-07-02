@@ -62,23 +62,24 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	
 Function _parseEnv()->$env : Object
 	$env:=New object:C1471
-	If (Is Windows:C1573)
-		
-	Else 
-		var $in; $out; $err : Text
-		LAUNCH EXTERNAL PROCESS:C811("/usr/bin/env"; $in; $out; $err)
-		var $pos : Integer
-		var $line : Text
-		For each ($line; Split string:C1554($out; Char:C90(Line feed:K15:40); sk ignore empty strings:K86:1))
-			$pos:=Position:C15("="; $line)
-			If ($pos>0)
-				$env[Substring:C12($line; 1; $pos-1)]:=Substring:C12($line; $pos+1)
-			Else 
-				$env[$line]:=""
+	var $pos : Integer
+	var $line : Text
+	var $in; $out; $err : Text
+	
+	LAUNCH EXTERNAL PROCESS:C811((Is Windows:C1573) ? "set" : "/usr/bin/env"; $in; $out; $err)
+	
+	For each ($line; Split string:C1554($out; (Is Windows:C1573) ? Char:C90(Carriage return:K15:38) : Char:C90(Line feed:K15:40); sk ignore empty strings:K86:1))
+		$pos:=Position:C15("="; $line)
+		If ($pos>0)
+			$env[Substring:C12($line; 1; $pos-1)]:=Substring:C12($line; $pos+1)
+			If (Is Windows:C1573 && (Length:C16($line)>0) && ($line[[1]]="'") && ($line[[Length:C16($line)]]="'"))  //  if window, remove  leading and trailig quote '
+				$env[Substring:C12($line; 1; $pos-1)]:=Substring:C12($line; $pos+2; Length:C16($line)-$pos-2)
 			End if 
-		End for each 
-		
-	End if 
+		Else 
+			$env[$line]:=""
+		End if 
+	End for each 
+	
 	
 	If ($env["GITHUB_EVENT_PATH"]#Null:C1517)
 		var $eventFile : 4D:C1709.File
@@ -113,7 +114,7 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 	$filePath:=String:C10($env[$key])
 	
 	If (Length:C16($filePath)>0)
-		$file:=File:C1566($filePath)  // TODO: test on window if platorm path
+		$file:=(Is Windows:C1573) ? File:C1566($filePath; fk platform path:K87:2) : File:C1566($filePath)
 		
 		If (Bool:C1537($replace))
 			$file.setText($value)
