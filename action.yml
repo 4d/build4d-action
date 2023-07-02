@@ -70,6 +70,6 @@ runs:
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
         user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}",
          "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
-         "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarning": "${{ inputs.ignore-warnings }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
+         "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"
