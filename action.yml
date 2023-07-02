@@ -13,7 +13,7 @@ inputs:
   targets:
     description: "Possible values: \"x86_64_generic\", \"arm64_macOS_lib\" if macOS"
     required: false
-    default: "[]"
+    default: ""
   type-inference:
     description: "String	\"all\": Type all variables,\n  \"locals\": Process and interprocess are typed,\n  \"none\": \"All variables are typed\""
     required: false
@@ -68,8 +68,8 @@ runs:
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
-        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}", \
-         "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , \
+        user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}",
+         "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
          "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarning": "${{ inputs.ignore-warnings }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"
