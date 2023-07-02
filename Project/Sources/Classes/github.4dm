@@ -60,6 +60,15 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	
 	// MARK:- process
 	
+Function temporaryFolder() : 4D:C1709.Folder
+	var $tempPath : Text
+	$tempPath:=String:C10(cs:C1710.github.new()._parseEnv()["RUNNER_TEMP"])  // maybe extract parse env
+	If (Length:C16($tempPath)>0)
+		return Is Windows:C1573 ? Folder:C1567($tempPath; fk platform path:K87:2) : Folder:C1567($tempPath)
+	Else 
+		return Folder:C1567(Temporary folder:C486; fk platform path:K87:2)
+	End if 
+	
 Function _parseEnv()->$env : Object
 	$env:=New object:C1471
 	var $pos : Integer

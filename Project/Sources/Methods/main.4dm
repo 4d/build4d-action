@@ -2,7 +2,7 @@
 
 Use (Storage:C1525)
 	Storage:C1525.github:=OB Copy:C1225(cs:C1710.github.new(); ck shared:K85:29)
-	Storage:C1525.exit:=New shared object:C1526("errorFlag"; Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("error_flag").path)
+	Storage:C1525.exit:=New shared object:C1526("errorFlag"; Storage:C1525.github.temporaryFolder().file("error_flag").path)
 End use 
 
 ON ERR CALL:C155("onError")  // ignore all, do not want to block CI
