@@ -70,9 +70,9 @@ Function temporaryFolder() : 4D:C1709.Folder
 	End if 
 	
 Function _parseEnv()->$env : Object
-	If (This:C1470._envCache#Null:C1517)
-		return This:C1470._envCache
-	End if 
+/*If (This._envCache#Null)
+return This._envCache
+End if */
 	
 	$env:=New object:C1471
 	var $pos : Integer
@@ -104,9 +104,9 @@ Function _parseEnv()->$env : Object
 		$env.event:=JSON Parse:C1218($eventFile.getText())
 	End if 
 	
-	Use (This:C1470)
-		This:C1470._envCache:=OB Copy:C1225($env; ck shared:K85:29)
-	End use 
+/*Use (This)
+This._envCache:=OB Copy($env; ck shared)
+End use */
 	
 	
 	// MARK:- file
