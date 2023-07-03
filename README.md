@@ -11,7 +11,13 @@ Convert compilation errors as github annotations.
 ```yaml
 name: build
 on:
-  ...
+ push:
+    paths:
+      - '**.4dm'
+  pull_request:
+    paths:
+      - '**.4dm'
+  workflow_dispatch:
 
 jobs:
   build:
