@@ -5,7 +5,7 @@ Case of
 	: (Value type:C1509($value)=Is boolean:K8:9)
 		return $value
 	: (Value type:C1509($value)=Is text:K8:3)
-		return (($value="true") || ($value="yes"))
+		return (($value="true") || ($value="yes") || ($value="1"))
 	: (Value type:C1509($value)=Is real:K8:4)
 		return $value=1
 	: (Value type:C1509($value)=Is integer:K8:5)
