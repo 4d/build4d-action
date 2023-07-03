@@ -22,40 +22,8 @@ Function build()->$status : Object
 	
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
-		var $databaseFolder : 4D:C1709.Folder
-		$databaseFolder:=$config.file.parent.parent
-		
-		//var $dependencies : Collection
-		//$dependencies:=This._getDependenciesFor($databaseFolder)
-		
-		If ($databaseFolder.folder("Components").exists)
-			Storage:C1525.github.info("...adding dependencies")
-			$config.options.components:=New collection:C1472
-			var $dependency : 4D:C1709.Folder
-			For each ($dependency; $databaseFolder.folder("Components").folders())
-				If ($dependency.file($dependency.name+".4DZ").exists)
-					Storage:C1525.github.info("Dependency archive found "+$dependency.name)
-					$config.options.components.push($dependency.file($dependency.name+".4DZ"))
-				End if 
-				If ($dependency.extension=".4dbase")
-					// XXX: maybe compile too if not yet (but will not work if not done in correct order)
-					
-					If ($dependency.folder("Project/DerivedData/CompiledCode").exists)
-						$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
-						$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
-						Storage:C1525.github.info("Dependency folder found "+$dependency.name)
-						$config.options.components.push($dependencyFile)
-						$temp4DZs.push($dependencyFile)
-					End if 
-				End if 
-			End for each 
-			
-			For each ($dependencyFile; $databaseFolder.folder("Components").files().filter(Formula:C1597($1.value.extension=".4DZ")))
-				$config.options.components.push($dependencyFile)
-			End for each 
-		End if 
+		$temp4DZs:=This:C1470._fillComponents($config)
 	End if 
-	// XXX: maybe check if all dep fullfilled to warn        
 	
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
 	
@@ -66,18 +34,24 @@ Function build()->$status : Object
 	End for each 
 	
 	// report final status
-	If ($status.success)
-		If (($status.errors#Null:C1517) && ($status.errors.length>0) && Not:C34(Bool:C1537($config.ignoreWarnings)))
+	Case of 
+		: (Not:C34($status.success))
+			Storage:C1525.github.error("‼️ Build failure")
+			Storage:C1525.github.addToSummary("## ‼️ Build failure")
+			
+		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Bool:C1537($config.failOnWarning))
+			Storage:C1525.github.warning("‼️ Build failure due to warnings")
+			Storage:C1525.github.addToSummary("## ‼️ Build failure due to warnings")
+			
+		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Not:C34(Bool:C1537($config.ignoreWarnings)))
 			Storage:C1525.github.warning("⚠️ Build success with warnings")
 			Storage:C1525.github.addToSummary("## ⚠️ Build success with warnings")
+			
 		Else 
 			Storage:C1525.github.notice("✅ Build success")
 			Storage:C1525.github.addToSummary("## ✅ Build success")
-		End if 
-	Else 
-		Storage:C1525.github.error("‼️ Build failure")
-		Storage:C1525.github.addToSummary("## ‼️ Build failure")
-	End if 
+			
+	End case 
 	
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
@@ -152,7 +126,7 @@ Function _reportCompilationError($error : Object)
 	// github action cmd
 	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
 	
-	If (Bool:C1537($error.isError))
+	If (Bool:C1537($error.isError) || Bool:C1537($config.failOnWarning))
 		SetErrorStatus("compilationError")
 	End if 
 	
@@ -167,6 +141,54 @@ Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collect
 				$dependencies:=$data.components
 			End if 
 	End case 
+	
+Function _fillComponents($config : Object)->$temp4DZs : Collection
+	var $status : Object
+	var $componentsFolder : 4D:C1709.Folder
+	var $dependency : 4D:C1709.Folder
+	var $dependencyFile : 4D:C1709.File
+	
+	$temp4DZs:=New collection:C1472
+	
+	//var $dependencies : Collection
+	//$dependencies:=This._getDependenciesFor($config.file.parent.parent)
+	
+	$componentsFolder:=$config.file.parent.parent.folder("Components")
+	
+	If (Not:C34($componentsFolder.exists))
+		return 
+	End if 
+	
+	Storage:C1525.github.info("...adding dependencies")
+	$config.options.components:=New collection:C1472
+	
+	// MARK: add 4dbase
+	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
+		
+		Case of 
+			: ($dependency.file($dependency.name+".4DZ").exists)  // archive exists
+				
+				Storage:C1525.github.info("Dependency archive found "+$dependency.name)
+				$config.options.components.push($dependency.file($dependency.name+".4DZ"))
+				
+			: ($dependency.folder("Project/DerivedData/CompiledCode").exists)  // maybe compiled but no archive yet
+				
+				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
+				$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
+				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
+				$config.options.components.push($dependencyFile)
+				$temp4DZs.push($dependencyFile)
+				
+		End case 
+		
+	End for each 
+	
+	// MARK: add 4dz
+	For each ($dependencyFile; $componentsFolder.files().filter(Formula:C1597($1.value.extension=".4DZ")))
+		$config.options.components.push($dependencyFile)
+	End for each 
+	
+	// XXX: maybe check if all dep fullfilled to warn  
 	
 	// MARK:- release
 	

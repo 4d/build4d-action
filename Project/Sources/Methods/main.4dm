@@ -39,6 +39,7 @@ If (Structure file:C489(*)=Structure file:C489())  // this base to test
 End if 
 
 $config.ignoreWarnings:=isTruthly($config.ignoreWarnings)
+$config.failOnWarning:=isTruthly($config.failOnWarning)
 
 Use (Storage:C1525.github)
 	Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
