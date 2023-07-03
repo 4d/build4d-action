@@ -27,6 +27,7 @@ $config:=JSON Parse:C1218($startupParam)
 If (Length:C16(String:C10($config.errorFlag))>0)
 	Use (Storage:C1525.exit)
 		Storage:C1525.exit.errorFlag:=String:C10($config.errorFlag)
+		Storage:C1525.github.debug("error flag defined to "+String:C10($config.errorFlag))
 	End use 
 End if 
 
