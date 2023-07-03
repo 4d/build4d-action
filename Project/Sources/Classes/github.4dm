@@ -62,7 +62,7 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	
 Function temporaryFolder() : 4D:C1709.Folder
 	var $tempPath : Text
-	$tempPath:=String:C10(cs:C1710.github.new()._parseEnv()["RUNNER_TEMP"])  // maybe extract parse env
+	$tempPath:=String:C10(This:C1470._parseEnv()["RUNNER_TEMP"])  // maybe extract parse env
 	If (Length:C16($tempPath)>0)
 		return Is Windows:C1573 ? Folder:C1567($tempPath; fk platform path:K87:2) : Folder:C1567($tempPath)
 	Else 
@@ -70,12 +70,20 @@ Function temporaryFolder() : 4D:C1709.Folder
 	End if 
 	
 Function _parseEnv()->$env : Object
+	If (This:C1470._envCache#Null:C1517)
+		return This:C1470._envCache
+	End if 
+	
 	$env:=New object:C1471
 	var $pos : Integer
 	var $line : Text
 	var $in; $out; $err : Text
 	
-	LAUNCH EXTERNAL PROCESS:C811((Is Windows:C1573) ? "set" : "/usr/bin/env"; $in; $out; $err)
+	If (Is Windows:C1573)
+		SET ENVIRONMENT VARIABLE:C812("_4D_OPTION_HIDE_CONSOLE"; "true")
+	End if 
+	
+	LAUNCH EXTERNAL PROCESS:C811((Is Windows:C1573) ? "cmd /C SET" : "/usr/bin/env"; $in; $out; $err)
 	
 	For each ($line; Split string:C1554($out; (Is Windows:C1573) ? Char:C90(Carriage return:K15:38) : Char:C90(Line feed:K15:40); sk ignore empty strings:K86:1))
 		$pos:=Position:C15("="; $line)
@@ -95,6 +103,11 @@ Function _parseEnv()->$env : Object
 		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10($env["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10($env["GITHUB_EVENT_PATH"]))
 		$env.event:=JSON Parse:C1218($eventFile.getText())
 	End if 
+	
+	Use (This:C1470)
+		This:C1470._envCache:=OB Copy:C1225($env; ck shared:K85:29)
+	End use 
+	
 	
 	// MARK:- file
 Function addEnv($key : Text; $value : Text)

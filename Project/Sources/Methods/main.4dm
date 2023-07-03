@@ -52,7 +52,11 @@ Else
 	// CLEAN: see env var ? any means using 4D?
 	
 	If (Structure file:C489(*)=Structure file:C489())  // this base to test
-		$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
+		If (Is Windows:C1573)
+			$config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
+		Else 
+			$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
+		End if 
 	End if 
 	
 End if 
