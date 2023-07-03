@@ -58,7 +58,9 @@ runs:
         else
            echo "RUNNER_DEBUG=$RUNNER_DEBUG" >> $GITHUB_ENV
         fi
-        echo "ERROR_FLAG=${{ runner.temp }}/error_flag" >> $GITHUB_ENV
+        MY_RUNNER_TMP=$(echo "${{ runner.temp }}" | sed 's/\\/\//g')
+        echo "TMP=$MY_RUNNER_TMP"
+        echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
     - id: tool4d
       uses: 4d/tool4d-action@v1
       env:
