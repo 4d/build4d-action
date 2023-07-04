@@ -75,10 +75,10 @@ you could pass the path of the project to compile if the project is not inside `
 
 see documentation of `Compiler projet` 4d command for more information
 
-- `targets`: x86_64_generic, arm64_macOS_lib
+- `targets`: x86_64_generic or/and arm64_macOS_lib (default: empty string, ie. do only check syntax)
 - `type-inference`: all, locals or none (default: none)
-- `generate-symbols: true if needed (default: false)
-- `generate-typing-methods: reset or append (default: empty string)
+- `generate-symbols`: true if needed (default: false)
+- `generate-typing-methods`: reset or append (default: empty string)
 
 #### reporting options
 
