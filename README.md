@@ -3,7 +3,7 @@
 [![build](https://github.com/4d/build4d-action/actions/workflows/build.yml/badge.svg)](https://github.com/4d/build4d-action/actions/workflows/build.yml)
 [![buildprj](https://github.com/4d/build4d-action/actions/workflows/buildprj.yml/badge.svg)](https://github.com/4d/build4d-action/actions/workflows/buildprj.yml)
 
-Take you 4D base and compile it.
+Take your 4D project and compile it.
 
 Convert compilation errors as github annotations.
 
