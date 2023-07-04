@@ -7,14 +7,17 @@ Function build()->$status : Object
 	$config:=This:C1470.config
 	
 	// get compilation options
-	If ((Value type:C1509($config.options)=Is text:K8:3) && \
-		((Length:C16($config.options)>1) && \
-		(Position:C15("{"; $config.options)=1)))
-		$config.options:=JSON Parse:C1218($config.options)
-		$config.options:=This:C1470._checkCompilationOptions($config.options)
-	Else 
-		$config.options:=New object:C1471
-	End if 
+	Case of 
+		: ((Value type:C1509($config.options)=Is text:K8:3) && \
+			((Length:C16($config.options)>1) && \
+			(Position:C15("{"; $config.options)=1)))
+			$config.options:=JSON Parse:C1218($config.options)
+			$config.options:=This:C1470._checkCompilationOptions($config.options)
+		: (Value type:C1509($config.options)=Is object:K8:27)
+			$config.options:=This:C1470._checkCompilationOptions($config.options)
+		Else 
+			$config.options:=New object:C1471
+	End case 
 	
 	var $dependencyFile : 4D:C1709.File
 	var $temp4DZs : Collection
@@ -91,7 +94,9 @@ Function _checkCompilationOptions($options : Variant) : Object
 	If ((Value type:C1509($options.targets)=Is text:K8:3) && (Length:C16($options.targets)>0))
 		$options.targets:=Split string:C1554($options.targets; ","; sk ignore empty strings:K86:1)
 	End if 
-	// XXX check values inside New collection("x86_64_generic"0"arm64_macOS_lib") ?
+	If (Value type:C1509($options.targets)=Is collection:K8:32)
+		$options.targets:=$options.targets.map("CheckTargetName").filter(Formula:C1597($1.value#Null:C1517))
+	End if 
 	
 	return $options
 	
@@ -153,8 +158,8 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	
 	$temp4DZs:=New collection:C1472
 	
-	//var $dependencies : Collection
-	//$dependencies:=This._getDependenciesFor($config.file.parent.parent)
+	var $dependencies : Collection
+	$dependencies:=This:C1470._getDependenciesFor($config.file.parent.parent)
 	
 	$componentsFolder:=$config.file.parent.parent.folder("Components")
 	
@@ -174,8 +179,9 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 				Storage:C1525.github.info("Dependency archive found "+$dependency.name)
 				$config.options.components.push($dependency.file($dependency.name+".4DZ"))
 				
-			: ($dependency.folder("Project/DerivedData/CompiledCode").exists)  // maybe compiled but no archive yet
+			: ($dependency.folder("Project").exists)  // maybe compiled or just have source but no archive yet
 				
+				// TODO: warning if some target are needed and dependencies is not compiled?
 				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
 				$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
@@ -191,7 +197,11 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 		$config.options.components.push($dependencyFile)
 	End for each 
 	
-	// XXX: maybe check if all dep fullfilled to warn  
+	//check if all dep fullfilled to warn if not
+	If (($dependencies.length>0) && ($dependencies.length#$config.options.components.length))
+		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10($config.options.components.length))
+	End if 
+	
 	
 	// MARK:- release
 	
