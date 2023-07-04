@@ -11,12 +11,21 @@ var $metadata : Object
 $metadata:=New object:C1471
 Case of 
 	: ($caller.type="projectMethod")
-		// {type:projectMethod,name:onServerStart,line:2,database:Compilator}
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Method/"+$caller.name+".4dm").path
+	: ($caller.type="databaseMethod")
+		$caller.name:=Replace string:C233($caller.name; " "; "")
+		$caller.name:=Lowercase:C14($caller.name[[1]])+Substring:C12($caller.name; 2)
+		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/DatabaseMethods/"+$caller.name+".4dm").path
 	: ($caller.type="classFunction")
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Classes/"+Substring:C12($caller.name; 1; Position:C15("."; $caller.name)-1)+".4dm").path
+	: ($caller.type="formObjectMethod")
+		If (Position:C15("."; $caller.name)>0)
+			$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Forms/"+Replace string:C233($caller.name; "."; "ObjectMethods")+".4dm").path
+		Else 
+			$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Forms/"+$caller.name+"/method.4dm").path
+		End if 
 	Else 
-		// TODO: not yet implemented (like db method, form method)
+		Storage:C1525.github.debug("Not managed type for caller file log error "+String:C10($caller.type))
 End case 
 
 $metadata.line:=String:C10($caller.line)  // is it line in file or line in code???
