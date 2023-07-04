@@ -25,7 +25,7 @@ inputs:
   generate-typing-methods:   
     description: "\"reset\" or \"append\" to generate typing methods.\nIf value is \"append\", existing variable declarations won't be modified (compiler window behavior).\nIf value is \"reset\" existing variable declarations are removed beforehand."
     required: false
-    default: "False"
+    default: ""
   ignore-warnings:   
     description: "Never display compilation warnings."
     required: false
