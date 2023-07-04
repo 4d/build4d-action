@@ -184,7 +184,8 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 				
 			: ($dependency.folder("Project").exists)  // maybe compiled or just have source but no archive yet
 				
-				// TODO: warning if some target are needed and dependencies is not compiled?
+				This:C1470._checkCompile($dependency)  // seems needed even for check syntax
+				
 				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
 				$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
@@ -205,6 +206,20 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10($config.options.components.length))
 	End if 
 	
+Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
+	If ($base.folder("Project/DerivedData/CompiledCode").exists)  // XXX suppose already compiled, maybe do according to target check if there is arm lib etc...
+		Storage:C1525.github.debug("Already compiled "+$base.path)
+		return New object:C1471("success"; True:C214)
+	End if 
+	
+	var $projectFile : Object
+	$projectFile:=$base.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first()
+	If ($projectFile=Null:C1517)
+		Storage:C1525.github.warning("Try to compile "+$base.path+" but no 4DProject file found")
+		return New object:C1471("success"; False:C215)
+	End if 
+	
+	$status:=Compile project:C1760($projectFile; New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"))
 	
 	// MARK:- release
 	
