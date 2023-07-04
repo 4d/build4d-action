@@ -117,14 +117,17 @@ Function _reportCompilationError($error : Object)
 		return 
 	End if 
 	
-	var $lineContent : Text
-	$lineContent:=Split string:C1554($error.code.file.getText("UTF-8"; Document with LF:K24:22); "\n")[$error.lineInFile-1]
-	
-	var $relativePath : Text
-	$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; $config.workingDirectory; "")
+	var $metadata : Object
+	//var $lineContent : Text
+	//$lineContent:=Split string($error.code.file.getText("UTF-8"; Document with LF); "\n")[$error.lineInFile-1]
+	If ($error.code#Null:C1517)
+		var $relativePath : Text
+		$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; $config.workingDirectory; "")
+		$metadata:=New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile))
+	End if 
 	
 	// github action cmd
-	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile)))
+	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; $metadata)
 	
 	If (Bool:C1537($error.isError) || Bool:C1537($config.failOnWarning))
 		SetErrorStatus("compilationError")
