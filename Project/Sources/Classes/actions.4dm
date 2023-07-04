@@ -164,6 +164,9 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	$componentsFolder:=$config.file.parent.parent.folder("Components")
 	
 	If (Not:C34($componentsFolder.exists))
+		If ($dependencies.length>0)
+			Storage:C1525.github.warning("No Components folder found for dependencies at path "+$componentsFolder.path)
+		End if 
 		return 
 	End if 
 	
