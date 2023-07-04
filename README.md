@@ -9,7 +9,7 @@ Convert compilation errors as github annotations.
 
 ## Usage
 
-Create workfile inside your repository with `.github/workflows/`, for instance `build.yml`, and put inside
+Create workflow file inside your repository inside `.github/workflows/`, for instance name `build.yml`, and put inside the following content
 
 ```yaml
 name: Build
@@ -32,6 +32,8 @@ jobs:
     - name: Build
       uses: 4d/build4d-action@main
 ```
+
+At each 4dm modification the build check syntax will be launched. See "Actions" tabs of your project.
 
 ### to build on macOS and window
 
@@ -63,6 +65,31 @@ jobs:
       uses: 4d/build4d-action@main
 ```
 
-## Example base
+### action options
 
-Could be found here https://github.com/e-marchand/tool4d-action-test
+#### `project`
+
+you could pass the path of the project to compile if the project is not inside `Project` folder
+
+#### compilations options
+
+see documentation of `Compiler projet` 4d command for more information
+
+- `targets`: x86_64_generic, arm64_macOS_lib
+- `type-inference`: all, locals or none (default: none)
+- `generate-symbols: true if needed (default: false)
+- `generate-typing-methods: reset or append (default: empty string)
+
+#### reporting options
+
+- `ignore-warnings`: do not display compilation error warnings if set to true
+- `fail-on-warning`: by default a warning do not make the task failed, if you want to be more strict you could set to true this topion
+
+#### choose 4d version
+
+The options are the same than tool4d-action: https://github.com/4d/tool4d-action#choose-tool4d-version-v1
+
+## Others
+
+- Based on github action: https://github.com/4d/tool4d-action
+- Example base: https://github.com/e-marchand/tool4d-action-test
