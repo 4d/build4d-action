@@ -124,8 +124,16 @@ If (Value type:C1509($config.actions)#Is collection:K8:32)
 End if 
 If ($config.actions.length=0)
 	$config.actions.push("build")
-	If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
+	If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))) || True:C214)
 		$config.actions.push("release")
+		// Add target for compilation option if missing
+		If ($config.options=Null:C1517)
+			$config.options:=New object:C1471()
+		End if 
+		If ($config.options.targets=Null:C1517)
+			$config.options.targets:="all"  // Maybe add all (work only on macOS?, just failed or let compilation failed)
+		End if 
+		
 	End if 
 End if 
 

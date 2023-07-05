@@ -12,6 +12,8 @@ Case of
 		$object.result:="x86_64_generic"
 	: ($object.value="arm64")
 		$object.result:="arm64_macOS_lib"
+	: ($object.value="all")
+		$object.result:=New collection:C1472("arm64_macOS_lib"; "x86_64_generic")
 	Else 
 		Storage:C1525.github.warning("Unknown target "+String:C10($object.value))
 		$object.result:=Null:C1517

@@ -95,7 +95,7 @@ Function _checkCompilationOptions($options : Variant) : Object
 		$options.targets:=Split string:C1554($options.targets; ","; sk ignore empty strings:K86:1)
 	End if 
 	If (Value type:C1509($options.targets)=Is collection:K8:32)
-		$options.targets:=$options.targets.map("CheckTargetName").filter(Formula:C1597($1.value#Null:C1517))
+		$options.targets:=$options.targets.flatMap("CheckTargetName").filter(Formula:C1597($1.value#Null:C1517))
 	End if 
 	
 	return $options
