@@ -112,17 +112,21 @@ Else
 End if 
 
 // check actions
-If (Value type:C1509($config.actions)=Is text:K8:3)
-	$config.actions:=Split string:C1554(String:C10($config.actions); ",")
+If ((Value type:C1509($config.actions)=Is text:K8:3) && (Length:C16($config.actions)>0))
+	If ($config.actions[[1]]="[")
+		$config.actions:=JSON Parse:C1218($config.actions)
+	Else 
+		$config.actions:=Split string:C1554(String:C10($config.actions); ",")
+	End if 
 End if 
 If (Value type:C1509($config.actions)#Is collection:K8:32)
 	$config.actions:=New collection:C1472
 End if 
 If ($config.actions.length=0)
 	$config.actions.push("build")
-End if 
-If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
-	$config.actions.push("release")
+	If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
+		$config.actions.push("release")
+	End if 
 End if 
 
 // run

@@ -34,6 +34,10 @@ inputs:
     description: "Failed on warnings."
     required: false
     default: "False"
+  actions:   
+    description: "\"build\""
+    required: false
+    default: ""
 
   product-line:
     description: 'tool4d product line'
@@ -75,7 +79,8 @@ runs:
         build: "${{ inputs.build }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
         user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}",
-         "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
-         "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
+          "actions":"${{ inputs.actions }}",
+          "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
+          "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"
