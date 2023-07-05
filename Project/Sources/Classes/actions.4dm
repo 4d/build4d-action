@@ -91,7 +91,7 @@ Function _checkCompilationOptions($options : Variant) : Object
 		End if 
 	End if 
 	
-	If ($config.actions.includes("release") && ($options.targets=Null:C1517))
+	If (This:C1470.config.actions.includes("release") && ($options.targets=Null:C1517))
 		$options.targets:="all"
 	End if 
 	
