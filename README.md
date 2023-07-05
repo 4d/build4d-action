@@ -82,8 +82,8 @@ see documentation of `Compiler projet` 4d command for more information
 
 #### reporting options
 
-- `ignore-warnings`: do not display compilation error warnings if set to true
-- `fail-on-warning`: by default a warning do not make the task failed, if you want to be more strict you could set to true this topion
+- `ignore-warnings`: do not display compilation warnings if set to true
+- `fail-on-warning`: by default a warning do not make the task failed, if you want to be more strict you could set this option to true
 
 #### choose 4d version
 
