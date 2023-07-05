@@ -91,6 +91,10 @@ Function _checkCompilationOptions($options : Variant) : Object
 		End if 
 	End if 
 	
+	If ($config.actions.includes("release") && ($options.targets=Null:C1517))
+		$options.targets:="all"
+	End if 
+	
 	If ((Value type:C1509($options.targets)=Is text:K8:3) && (Length:C16($options.targets)>0))
 		$options.targets:=Split string:C1554($options.targets; ","; sk ignore empty strings:K86:1)
 	End if 
@@ -271,7 +275,7 @@ Function release()->$status : Object
 		var $github : Object
 		$status:=Storage:C1525.github.postArtefact($artefact)
 		If (Not:C34($status.success))
-			Storage:C1525.github.error("error when pusing artifact to release:"+String:C10($status.statusText))
+			Storage:C1525.github.error("error when pushing artifact to release:"+String:C10($status.statusText))
 		End if 
 	End if 
 	
