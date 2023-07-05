@@ -121,9 +121,9 @@ End if
 If ($config.actions.length=0)
 	$config.actions.push("build")
 End if 
-/*If (Bool(Num(String(cs.github.new()["RELEASE"]))))
-$config.actions.push("release")
-End if */
+If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
+	$config.actions.push("release")
+End if 
 
 // run
 Case of 
