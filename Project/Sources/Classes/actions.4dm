@@ -211,7 +211,9 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	End if 
 	
 Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
-	If ($base.folder("Project/DerivedData/CompiledCode").exists)  // XXX suppose already compiled, maybe do according to target check if there is arm lib etc...
+	var $compiledCodeFolder : 4D:C1709.Folder
+	$compiledCodeFolder:=$base.folder("Project/DerivedData/CompiledCode")
+	If (($compiledCodeFolder.exists) && (($compiledCodeFolder.files().length+$compiledCodeFolder.folders().length)#0))  // XXX suppose already compiled, maybe do according to target check if there is arm lib etc...
 		Storage:C1525.github.debug("Already compiled "+$base.path)
 		return New object:C1471("success"; True:C214)
 	End if 
@@ -224,6 +226,21 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 	End if 
 	
 	$status:=Compile project:C1760($projectFile; New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"))
+	
+	// report errors
+	If (($status.errors#Null:C1517) && ($status.errors.length>0))
+		
+		Storage:C1525.github.startGroup("Compilation errors - "+String:C10($projectFile.name))
+		
+		var $error : Object
+		For each ($error; $status.errors)
+			This:C1470._reportCompilationError($error)
+		End for each 
+		
+		Storage:C1525.github.endGroup()
+		
+	End if 
+	
 	
 	// MARK:- release
 	
