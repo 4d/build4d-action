@@ -155,27 +155,46 @@ Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collect
 	End case 
 	
 Function _fillComponents($config : Object)->$temp4DZs : Collection
-	var $status : Object
+	var $baseFolder : 4D:C1709.Folder
 	var $componentsFolder : 4D:C1709.Folder
-	var $dependency : 4D:C1709.Folder
-	var $dependencyFile : 4D:C1709.File
-	
+	var $componentsFolders : Collection
 	$temp4DZs:=New collection:C1472
 	
+	$baseFolder:=$config.file.parent.parent
+	$componentsFolders:=New collection:C1472($baseFolder.folder("Components"); $baseFolder.folder("Build/Components"))
+	
 	var $dependencies : Collection
-	$dependencies:=This:C1470._getDependenciesFor($config.file.parent.parent)
+	$dependencies:=This:C1470._getDependenciesFor($baseFolder)
 	
-	$componentsFolder:=$config.file.parent.parent.folder("Components")
-	
-	If (Not:C34($componentsFolder.exists))
-		If ($dependencies.length>0)
-			Storage:C1525.github.warning("No Components folder found for dependencies at path "+$componentsFolder.path)
+	If ($dependencies.length>0)
+		If (Not:C34($componentsFolders.reduce(Formula:C1597($1.accumulator:=$1.accumulator || $1.value.exists); False:C215)))
+			Storage:C1525.github.warning("No Components folder found for dependencies")
 		End if 
 		return 
 	End if 
 	
 	Storage:C1525.github.info("...adding dependencies")
 	$config.options.components:=New collection:C1472
+	
+	For each ($componentsFolder; $componentsFolders)
+		This:C1470._addDepFromFolder($componentsFolder; $temp4DZs)
+	End for each 
+	
+	//check if all dep fullfilled to warn if not
+	If (($dependencies.length>0) && ($dependencies.length#$config.options.components.length))
+		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10($config.options.components.length))
+	End if 
+	
+Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Collection)
+	If (Not:C34($componentsFolder.exists))
+		return 
+	End if 
+	
+	var $dependency : 4D:C1709.Folder
+	var $dependencyFile : 4D:C1709.File
+	var $status : Object
+	var $config : Object
+	$config:=This:C1470.config
 	
 	// MARK: add 4dbase
 	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
@@ -205,10 +224,6 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 		$config.options.components.push($dependencyFile)
 	End for each 
 	
-	//check if all dep fullfilled to warn if not
-	If (($dependencies.length>0) && ($dependencies.length#$config.options.components.length))
-		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10($config.options.components.length))
-	End if 
 	
 Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 	var $compiledCodeFolder : 4D:C1709.Folder
