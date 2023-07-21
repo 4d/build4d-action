@@ -166,11 +166,13 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	var $dependencies : Collection
 	$dependencies:=This:C1470._getDependenciesFor($baseFolder)
 	
+	Storage:C1525.github.debug("base folder "+$baseFolder.path)
+	
 	If ($dependencies.length>0)
+		Storage:C1525.github.debug("expecting dependencies length "+String:C10($dependencies.length))
 		If (Not:C34($componentsFolders.reduce(Formula:C1597($1.accumulator:=$1.accumulator || $1.value.exists); False:C215)))
 			Storage:C1525.github.warning("No Components folder found for dependencies")
 		End if 
-		return 
 	End if 
 	
 	Storage:C1525.github.info("...adding dependencies")
