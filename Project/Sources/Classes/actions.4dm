@@ -241,14 +241,17 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 		Storage:C1525.github.warning("Try to compile "+$base.path+" but no 4DProject file found")
 		return New object:C1471("success"; False:C215)
 	End if 
-	If (Position:C15("4D"; $projectFile.fullName)=1)
-		$projectFileTmp:=$projectFile.copyTo($projectFile.parent; This:C1470._not4DName($projectFile.fullName); fk overwrite:K87:5)
+	If (Position:C15("4D"; $projectFile.name)=1)
+		$projectFileTmp:=$projectFile.copyTo($projectFile.parent; This:C1470._not4DName($projectFile.name)+$projectFile.extension; fk overwrite:K87:5)
 		$projectFile.delete()  // CI things, if test locally maybe not
 		Storage:C1525.github.debug("Renaming project file from '"+$projectFile.path+"' to '"+$projectFileTmp.path+"'("+String:C10(Bool:C1537($projectFileTmp.exists)))
 		$projectFile:=$projectFileTmp
 	End if 
 	
-	$status:=Compile project:C1760($projectFile; New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"))
+	var $options : Object
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	Storage:C1525.github.debug("compiling project file from '"+$projectFile.path+"' with option "+JSON Stringify:C1217($options))
+	$status:=Compile project:C1760($projectFile; $options)
 	
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
