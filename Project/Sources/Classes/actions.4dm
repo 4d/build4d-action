@@ -209,7 +209,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 				
 				This:C1470._checkCompile($dependency)  // seems needed even for check syntax
 				
-				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file($dependency.name+".4DZ")
+				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file(This:C1470._not4DName($dependency.name)+".4DZ")
 				$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
 				$config.options.components.push($dependencyFile)
@@ -233,11 +233,16 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 		return New object:C1471("success"; True:C214)
 	End if 
 	
-	var $projectFile : Object
+	var $projectFile; $projectFileTmp : 4D:C1709.File
 	$projectFile:=$base.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first()
 	If ($projectFile=Null:C1517)
 		Storage:C1525.github.warning("Try to compile "+$base.path+" but no 4DProject file found")
 		return New object:C1471("success"; False:C215)
+	End if 
+	If (Position:C15("4D"; $projectFile.fullName)=1)
+		$projectFileTmp:=$projectFile.copyTo($projectFile.parent; This:C1470._not4DName($projectFile.fullName))
+		$projectFile.delete()  // CI things, if test locally maybe not
+		$projectFile:=$projectFileTmp
 	End if 
 	
 	$status:=Compile project:C1760($projectFile; New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"))
@@ -256,6 +261,12 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 		
 	End if 
 	
+Function _not4DName($text : Text) : Text
+	var $to : Text
+	For each ($to; New collection:C1472("4D "; "4D "; "4D-"; "4D_"; "4D"))
+		$text:=Replace string:C233($text; $to; "")
+	End for each 
+	return $text
 	
 	// MARK:- release
 	
