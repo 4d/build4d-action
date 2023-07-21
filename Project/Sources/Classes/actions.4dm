@@ -242,8 +242,9 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 		return New object:C1471("success"; False:C215)
 	End if 
 	If (Position:C15("4D"; $projectFile.fullName)=1)
-		$projectFileTmp:=$projectFile.copyTo($projectFile.parent; This:C1470._not4DName($projectFile.fullName))
+		$projectFileTmp:=$projectFile.copyTo($projectFile.parent; This:C1470._not4DName($projectFile.fullName); fk overwrite:K87:5)
 		$projectFile.delete()  // CI things, if test locally maybe not
+		Storage:C1525.github.debug("Renaming project file from '"+$projectFile.path+"' to '"+$projectFileTmp.path+"'("+String:C10(Bool:C1537($projectFileTmp.exists)))
 		$projectFile:=$projectFileTmp
 	End if 
 	
