@@ -51,6 +51,9 @@ inputs:
     description: 'tool4d build number'
     required: false
     default: "latest"
+  token:
+    description: 'if needed a token to download'
+    required: false
 runs:
   using: 'composite'
   steps:
@@ -77,6 +80,7 @@ runs:
         product-line: "${{ inputs.product-line }}"
         version: "${{ inputs.version }}"
         build: "${{ inputs.build }}"
+        token: "${{ inputs.token }}"
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
         user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}",
           "actions":"${{ inputs.actions }}",
