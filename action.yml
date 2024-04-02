@@ -46,7 +46,7 @@ inputs:
   version:
     description: 'tool4d version'
     required: false
-    default: "20.1"
+    default: "20.3"
   build:
     description: 'tool4d build number'
     required: false
