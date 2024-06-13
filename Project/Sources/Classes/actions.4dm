@@ -349,6 +349,12 @@ Function _cleanProject($base : 4D:C1709.Folder)
 		$folder.delete(Delete with contents:K24:24)
 	End for each 
 	
+	// user pref
+	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
+		$folder.delete(Delete with contents:K24:24)
+	End for each 
+	
+	
 	// tool4d (try to do bette later, ie. binary not inside current working dir)
 	$folder.file("tool4d.tar.xz").delete()
 	
