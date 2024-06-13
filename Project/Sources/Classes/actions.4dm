@@ -349,4 +349,36 @@ Function _cleanProject($base : 4D:C1709.Folder)
 		$folder.delete(Delete with contents:K24:24)
 	End for each 
 	
+	// user pref
+	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
+		$folder.delete(Delete with contents:K24:24)
+	End for each 
+	
+	// tool4d (try to do bette later, ie. binary not inside current working dir)
+	If ($base.file("tool4d.tar.xz").exists)
+		$base.file("tool4d.tar.xz").delete()
+	End if 
+	If ($base.file("action.yml").exists)
+		$base.file("action.yml").delete()
+	End if 
+	Case of 
+		: (Is macOS:C1572)
+			If ($base.folder("tool4d.app").exists)
+				$base.folder("tool4d.app").delete(fk recursive:K87:7)
+			End if 
+		: (Is Windows:C1573)
+			If ($base.folder("tool4d").exists)
+				$base.folder("tool4d").delete(fk recursive:K87:7)
+			End if 
+		Else 
+			If ($base.file("bin/tool4d").exists)
+				$base.file("bin/tool4d").delete()
+				If ($base.folder("bin/Resources").exists)
+					$base.folder("bin/Resources").delete(fk recursive:K87:7)
+				End if 
+				If (($base.folder("bin").files().length+$base.folder("bin").folders().length)=0)
+					$base.folder("bin").delete(fk recursive:K87:7)
+				End if 
+			End if 
+	End case 
 	

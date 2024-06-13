@@ -27,7 +27,7 @@ Function debug($message : Text; $parameters : Object)
 	// MARK:-  variable
 	
 Function exportVariable($name : Text; $val : Text)
-	This:C1470.cmd("set-env"; $val; New object:C1471("name"; $name))
+	This:C1470.cmd("set-env"; $val; 0; New object:C1471("name"; $name))
 	
 Function setSecret($secret : Text)
 	This:C1470.cmd("add-mask"; $secret)
@@ -170,24 +170,34 @@ Function postArtefact($artefact : 4D:C1709.File)->$result : Object
 		: (Length:C16(String:C10($env.event.release.id))=0)
 			$result:=New object:C1471("success"; False:C215; "statusText"; "No release id in event.")
 		Else 
+			
 			var $uploadURL : Text
 			$uploadURL:="https://uploads.github.com/repos/"+String:C10($env["GITHUB_REPOSITORY"])+"/releases/"+String:C10($env.event.release.id)+"/assets?name="+String:C10($artefact.fullName)
 			This:C1470.debug("using url="+$uploadURL)
 			
-			ARRAY TEXT:C222($headerNames; 3)
-			ARRAY TEXT:C222($headerValues; 3)
+			ARRAY TEXT:C222($headerNames; 5)
+			ARRAY TEXT:C222($headerValues; 5)
 			$headerNames{1}:="Authorization"
-			$headerValues{1}:="token "+String:C10($env["GITHUB_TOKEN"])
+			$headerValues{1}:="Bearer "+String:C10($env["GITHUB_TOKEN"])
+			This:C1470.debug("token="+$env["GITHUB_TOKEN"])
 			$headerNames{2}:="Content-Length"
 			$headerValues{2}:=String:C10($artefact.size)
 			$headerNames{3}:="Content-Type"
-			$headerValues{3}:="application/json"
+			$headerValues{3}:="application/octet-stream"
+			$headerNames{4}:="Accept"
+			$headerValues{4}:="application/vnd.github+json"
+			$headerNames{5}:="X-GitHub-Api-Version"
+			$headerValues{5}:="2022-11-28"
 			
 			var $response : Object
 			var $httpStatus : Integer
-			$httpStatus:=HTTP Request:C1158(HTTP POST method:K71:2; $uploadURL; $artefact.getContent(); $response; $headerNames; $headerValues)
+			var $content : Blob
+			$content:=$artefact.getContent()
+			$httpStatus:=HTTP Request:C1158(HTTP POST method:K71:2; $uploadURL; $content; $response; $headerNames; $headerValues)
 			
 			$result:=New object:C1471("response"; $response)
 			$result.success:=$httpStatus<300
 			$result.httpStatus:=$httpStatus
+			$result.statusText:=JSON Stringify:C1217($response)
+			
 	End case 
