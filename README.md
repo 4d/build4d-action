@@ -28,7 +28,7 @@ jobs:
     runs-on: windows-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Build
       uses: 4d/build4d-action@main
 ```
@@ -60,7 +60,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Build
       uses: 4d/build4d-action@main
 ```
@@ -69,11 +69,11 @@ jobs:
 
 #### `project`
 
-you could pass the path of the project to compile if the project is not inside `Project` folder
+You could pass the path of the project to compile it, if the project is not inside the `Project` folder.
 
 #### compilations options
 
-see documentation of `Compiler projet` 4d command for more information
+See documentation of `Compiler projet` 4d command for more information
 
 - `targets`: x86_64_generic or/and arm64_macOS_lib (default: empty string, ie. do only check syntax)
 - `type-inference`: all, locals or none (default: none)
