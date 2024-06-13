@@ -358,7 +358,9 @@ Function _cleanProject($base : 4D:C1709.Folder)
 	If ($base.file("tool4d.tar.xz").exists)
 		$base.file("tool4d.tar.xz").delete()
 	End if 
-	
+	If ($base.file("action.yml").exists)
+		$base.file("action.yml").delete()
+	End if 
 	Case of 
 		: (Is macOS:C1572)
 			If ($base.folder("tool4d.app").exists)
