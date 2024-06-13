@@ -355,8 +355,8 @@ Function _cleanProject($base : 4D:C1709.Folder)
 	End for each 
 	
 	// tool4d (try to do bette later, ie. binary not inside current working dir)
-	If ($folder.file("tool4d.tar.xz").exists)
-		$folder.file("tool4d.tar.xz").delete()
+	If ($base.file("tool4d.tar.xz").exists)
+		$base.file("tool4d.tar.xz").delete()
 	End if 
 	
 	Case of 
