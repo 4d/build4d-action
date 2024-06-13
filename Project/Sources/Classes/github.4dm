@@ -179,6 +179,7 @@ Function postArtefact($artefact : 4D:C1709.File)->$result : Object
 			ARRAY TEXT:C222($headerValues; 5)
 			$headerNames{1}:="Authorization"
 			$headerValues{1}:="Bearer "+String:C10($env["GITHUB_TOKEN"])
+			This:C1470.debug("token="+$env["GITHUB_TOKEN"])
 			$headerNames{2}:="Content-Length"
 			$headerValues{2}:=String:C10($artefact.size)
 			$headerNames{3}:="Content-Type"
@@ -190,7 +191,9 @@ Function postArtefact($artefact : 4D:C1709.File)->$result : Object
 			
 			var $response : Object
 			var $httpStatus : Integer
-			$httpStatus:=HTTP Request:C1158(HTTP POST method:K71:2; $uploadURL; $artefact.getContent(); $response; $headerNames; $headerValues)
+			var $content : Blob
+			$content:=$artefact.getContent()
+			$httpStatus:=HTTP Request:C1158(HTTP POST method:K71:2; $uploadURL; $content; $response; $headerNames; $headerValues)
 			
 			$result:=New object:C1471("response"; $response)
 			$result.success:=$httpStatus<300
