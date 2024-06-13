@@ -9,7 +9,8 @@ jobs:
     env:
       RELEASE: 1
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-    permissions: write-all
+    permissions:
+      contents: write # for asset upload
     steps:
       - name: ⬇️ Checkout
         uses: actions/checkout@v4
