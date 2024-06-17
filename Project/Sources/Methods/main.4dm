@@ -81,11 +81,7 @@ If (Length:C16(String:C10($config.path))=0)
 	
 Else 
 	
-	$config.path:=Replace string:C233($config.path; "\\"; "/")
-	
-	var $configFile:=4D:C1709.File
-	$configFile:=File:C1566($config.path)
-	If (($configFile=Null:C1517) || Not:C34($configFile.exists))
+	If (Not:C34(File:C1566($config.path).exists))
 		
 		$config.relative:=$config.path
 		
