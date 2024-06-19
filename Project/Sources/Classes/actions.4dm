@@ -1,6 +1,110 @@
 Class constructor($config : Object)
 	This:C1470.config:=$config
 	
+	
+	
+	If ($config.debug#Null:C1517)
+		$config.debug:=isTruthly($config.debug)
+	End if 
+	If (Structure file:C489(*)=Structure file:C489())  // this base to test
+		$config.debug:=True:C214
+	End if 
+	
+	$config.ignoreWarnings:=isTruthly($config.ignoreWarnings)
+	$config.failOnWarning:=isTruthly($config.failOnWarning)
+	
+	Use (Storage:C1525.github)
+		Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
+	End use 
+	
+	// check "workingDirectory"
+	If (Length:C16(String:C10($config.workingDirectory))>0)
+		
+		Storage:C1525.github.debug("workingDirectory="+String:C10($config.workingDirectory))
+		
+	Else 
+		// CLEAN: see env var ? any means using 4D?
+		
+		If (Structure file:C489(*)=Structure file:C489())  // this base to test
+			If (Is Windows:C1573)
+				$config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
+			Else 
+				$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
+			End if 
+		End if 
+		
+	End if 
+	
+	// check "path"
+	If (Length:C16(String:C10($config.path))=0)
+		
+		// find first file into 
+		If ($config.workingDirectory#Null:C1517)
+			
+			If (Is Windows:C1573)
+				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory; fk platform path:K87:2)
+			Else 
+				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory)
+			End if 
+			
+			$config.path:=String:C10($config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
+			
+		End if 
+		
+	Else 
+		
+		If (Not:C34(File:C1566($config.path).exists))
+			
+			$config.relative:=$config.path
+			
+			// ensure not a mixed path with \ and / due to window full path + posix relative path of project ie be tolerant
+			If (Is Windows:C1573)
+				
+				$config.relative:=Replace string:C233($config.workingDirectory; $config.path; "")
+				$config.relative:=Replace string:C233($config.relative; "/"; "\\")
+				If (Position:C15("\\"; $config.relative)=1)
+					$config.relative:=Delete string:C232($config.relative; 1; 1)
+				End if 
+				
+			End if 
+			
+			If (Is Windows:C1573)
+				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory; fk platform path:K87:2)
+			Else 
+				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory)
+			End if 
+			
+			$config.file:=$config.workingDirectoryFolder.file($config.path)
+			If ($config.file#Null:C1517)
+				$config.path:=$config.file.path
+			End if 
+			
+		End if 
+		
+	End if 
+	
+	// check actions
+	If ((Value type:C1509($config.actions)=Is text:K8:3) && (Length:C16($config.actions)>0))
+		If ($config.actions[[1]]="[")
+			$config.actions:=JSON Parse:C1218($config.actions)
+		Else 
+			$config.actions:=Split string:C1554(String:C10($config.actions); ",")
+		End if 
+	End if 
+	If (Value type:C1509($config.actions)#Is collection:K8:32)
+		$config.actions:=New collection:C1472
+	End if 
+	If ($config.actions.length=0)
+		$config.actions.push("build")
+		If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
+			$config.actions.push("release")
+		End if 
+	End if 
+	
+	
+	
+	
+	
 	// MARK:- build
 Function build()->$status : Object
 	var $config : Object
@@ -381,4 +485,45 @@ Function _cleanProject($base : 4D:C1709.Folder)
 				End if 
 			End if 
 	End case 
+	
+	// MARK:- run
+	
+Function run() : Object
+	var $status : Object
+	$status:=New object:C1471("success"; True:C214)
+	
+	Case of 
+		: (Length:C16(String:C10(This:C1470.config.path))=0)
+			
+			Storage:C1525.github.error("no correct project file path provided")
+			$status.success:=False:C215
+			
+		: (Not:C34(File:C1566(This:C1470.config.path).exists))
+			
+			Storage:C1525.github.error("project file "+This:C1470.config.path+" do not exists")
+			$status.success:=False:C215
+			
+		Else 
+			
+			Storage:C1525.github.debug("path="+String:C10(This:C1470.config.path))
+			
+			This:C1470.config.file:=File:C1566(This:C1470.config.path)  // used to get parents directory (for instance to get components)
+			
+			Storage:C1525.github.debug("...will execute actions: "+This:C1470.config.actions.join(","))
+			
+			var $action : Text
+			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
+				If ((OB Instance of:C1731(This:C1470.config.actions[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1) && ($action#"run"))
+					Storage:C1525.github.notice("action "+$action)
+					$status:=This:C1470.config.actions[$action].call(This:C1470.config.actions)
+				Else 
+					Storage:C1525.github.error("Unknown action "+$action)
+					$status.success:=False:C215
+				End if 
+			End for each 
+			
+	End case 
+	
+	return $status
+	
 	
