@@ -111,9 +111,6 @@ Function _setup($config : Object)
 	
 	If ($config.actions.length=0)
 		$config.actions.push("build")
-		If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
-			$config.actions.push("release")
-		End if 
 	End if 
 	
 	
@@ -290,10 +287,6 @@ Function _checkCompilationOptions($options : Variant) : Object
 		If (Not:C34(New collection:C1472("none"; "all"; "locals").includes($options.typeInferences)))
 			$options.typeInferences:="none"
 		End if 
-	End if 
-	
-	If (This:C1470.config.actions.includes("release") && ($options.targets=Null:C1517))
-		$options.targets:="all"
 	End if 
 	
 	If ((This:C1470.config.outputDirectory#Null:C1517) && ($options.targets=Null:C1517))  // if an output we want to build something
@@ -619,116 +612,6 @@ Function sign() : Object
 	
 	return $status
 	
-	
-	// MARK:- release
-	
-Function release()->$status : Object
-	var $config : Object
-	$config:=OB Copy:C1225(This:C1470.config)
-	
-	$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
-	
-	var $databaseFolder : 4D:C1709.Folder
-	$databaseFolder:=$config.file.parent.parent
-	var $databaseName : Text
-	$databaseName:=$config.file.name
-	Storage:C1525.github.info("...will archive "+$databaseName)
-	
-	// archive and move it
-	var $buildDir : 4D:C1709.Folder
-	$buildDir:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).folder(Generate UUID:C1066)
-	$buildDir.create()
-	
-	Storage:C1525.github.info("🗃 4dz creation")
-	// copy all base to destination
-	var $destinationBase : 4D:C1709.Folder
-	$destinationBase:=$databaseFolder.copyTo($buildDir; $databaseName+".4dbase"; fk overwrite:K87:5)
-	// remove all sources (could be opt if want to distribute with sources, add an option?)
-	This:C1470._cleanProject($destinationBase)
-	
-	// zip into 4dz compilation files
-	$status:=ZIP Create archive:C1640($destinationBase.folder("Project"); $destinationBase.file($databaseName+".4DZ"))
-	// finally clean all
-	$destinationBase.folder("Project").delete(Delete with contents:K24:24)
-	// XXX could clean also logs, pref etc.. but must not be in vcs...
-	If (Not:C34($status.success))
-		Storage:C1525.github.error("error when creating 4z:"+String:C10($status.statusText))
-	End if 
-	
-	If ($status.success)
-		// the 4d base
-		Storage:C1525.github.info("📦 final archive creation")
-		var $artefact : 4D:C1709.File
-		$artefact:=$buildDir.file($databaseName+".zip")
-		$status:=ZIP Create archive:C1640($destinationBase; $artefact)
-		If (Not:C34($status.success))
-			Storage:C1525.github.error("error when creating archive:"+String:C10($status.statusText))
-		End if 
-	End if 
-	
-	If ($status.success)
-		// Send to release
-		Storage:C1525.github.info("🚀 send archive to release")
-		var $github : Object
-		$status:=Storage:C1525.github.postArtefact($artefact)
-		If (Not:C34($status.success))
-			Storage:C1525.github.error("error when pushing artifact to release:"+String:C10($status.statusText))
-		End if 
-	End if 
-	
-	Storage:C1525.github.info("🧹 cleaning release working directory")
-	$buildDir.delete(Delete with contents:K24:24)
-	
-Function _cleanProject($base : 4D:C1709.Folder)
-	
-	var $file : 4D:C1709.File
-	var $folder : 4D:C1709.Folder
-	
-	// sources
-	For each ($file; $base.folder("Project").files(fk recursive:K87:7).query("extension=.4dm"))
-		$file.delete()
-	End for each 
-	
-	// invisible files
-	For each ($file; $base.files().query("fullName=.@"))
-		$file.delete()
-	End for each 
-	For each ($folder; $base.folders().query("fullName=.@"))
-		$folder.delete(Delete with contents:K24:24)
-	End for each 
-	
-	// user pref
-	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
-		$folder.delete(Delete with contents:K24:24)
-	End for each 
-	
-	// tool4d (try to do bette later, ie. binary not inside current working dir)
-	If ($base.file("tool4d.tar.xz").exists)
-		$base.file("tool4d.tar.xz").delete()
-	End if 
-	If ($base.file("action.yml").exists)
-		$base.file("action.yml").delete()
-	End if 
-	Case of 
-		: (Is macOS:C1572)
-			If ($base.folder("tool4d.app").exists)
-				$base.folder("tool4d.app").delete(fk recursive:K87:7)
-			End if 
-		: (Is Windows:C1573)
-			If ($base.folder("tool4d").exists)
-				$base.folder("tool4d").delete(fk recursive:K87:7)
-			End if 
-		Else 
-			If ($base.file("bin/tool4d").exists)
-				$base.file("bin/tool4d").delete()
-				If ($base.folder("bin/Resources").exists)
-					$base.folder("bin/Resources").delete(fk recursive:K87:7)
-				End if 
-				If (($base.folder("bin").files().length+$base.folder("bin").folders().length)=0)
-					$base.folder("bin").delete(fk recursive:K87:7)
-				End if 
-			End if 
-	End case 
 	
 	// MARK:- run
 	

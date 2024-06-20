@@ -154,7 +154,7 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 	
 	
 	// MARK:- artefact
-Function postArtefact($artefact : 4D:C1709.File)->$result : Object
+Function postArtefactToRelease($artefact : 4D:C1709.File)->$result : Object
 	var $env : Object
 	$env:=This:C1470._parseEnv()
 	
