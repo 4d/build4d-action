@@ -89,7 +89,7 @@ See documentation of `Compiler projet` 4d command for more information
 - `ignore-warnings`: do not display compilation warnings if set to true
 - `fail-on-warning`: by default a warning do not make the task failed, if you want to be more strict you could set this option to true
 
-#### action options
+#### more options
 
 You could do more than build. For instance you could pack(create 4DZ), and archive result (into zip)
 
@@ -104,6 +104,14 @@ To sign add the action
 then you must specify the certificate name that you install in a previous step (using Github secret for instance)
 - `secret-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
 - `secret-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
+
+```json
+    - name: Build
+      uses: 4d/build4d-action@main
+      with:
+        actions: "build,pack,sign,archive"
+        sign-certificate: "Developer ID"
+```
 
 ## Others
 
