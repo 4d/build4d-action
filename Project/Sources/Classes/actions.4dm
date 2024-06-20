@@ -118,6 +118,7 @@ Function _setup($config : Object)
 		
 		// if pack action, we need an output dir
 		$config.outputDirectory:=File:C1566($config.path).parent.parent.folder("build")  // .build?
+		Storage:C1525.github.debug("Set default output directory to "+$config.outputDirectory.path)
 		
 	End if 
 	
@@ -512,14 +513,16 @@ Function pack() : Object
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
-	If (This:C1470.config.outputDirectory=Null:C1517)
+	var $config : Object
+	$config:=This:C1470.config
+	
+	If ($config.outputDirectory=Null:C1517)
 		$status.success:=False:C215
+		Storage:C1525.github.error("Must have defined an output directory")
 		$status.errors:=New collection:C1472("Must have defined an output directory")
 		return $status
 	End if 
 	
-	var $config : Object
-	$config:=This:C1470.config
 	
 	var $packFile : 4D:C1709.File
 	$packFile:=$config.file.parent.parent.file($config.file.name+".4DZ")
