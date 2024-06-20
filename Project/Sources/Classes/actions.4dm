@@ -95,22 +95,6 @@ Function _setup($config : Object)
 		
 	End if 
 	
-	If ($config.outputDirectory#Null:C1517)
-		
-		If (Value type:C1509($config.outputDirectory)=Is text:K8:3)
-			If (Is Windows:C1573)
-				$config.outputDirectory:=Replace string:C233($config.outputDirectory; "\\"; "/")
-			End if 
-			$config.outputDirectory:=Folder:C1567($config.outputDirectory)
-		End if 
-		
-		ASSERT:C1129(Value type:C1509($config.outputDirectory)=Is object:K8:27)  // even check folders?
-		
-		If (Not:C34($config.outputDirectory.exists))
-			$config.outputDirectory.create()  // TODO: if not log error?
-		End if 
-		
-	End if 
 	
 	// check actions
 	If ((Value type:C1509($config.actions)=Is text:K8:3) && (Length:C16($config.actions)>0))
@@ -130,7 +114,35 @@ Function _setup($config : Object)
 		End if 
 	End if 
 	
+	If ($config.actions.includes("pack") && ($config.outputDirectory=Null:C1517))
+		
+		// if pack action, we need an output dir
+		$config.outputDirectory:=File:C1566($config.path).parent.parent.folder("build")  // .build?
+		
+	End if 
 	
+	If ($config.actions.includes("pack") && Not:C34($config.actions.includes("build")))
+		
+		$config.actions.unshift("build")
+		
+	End if 
+	
+	If ($config.outputDirectory#Null:C1517)
+		
+		If (Value type:C1509($config.outputDirectory)=Is text:K8:3)
+			If (Is Windows:C1573)
+				$config.outputDirectory:=Replace string:C233($config.outputDirectory; "\\"; "/")
+			End if 
+			$config.outputDirectory:=Folder:C1567($config.outputDirectory)
+		End if 
+		
+		ASSERT:C1129(Value type:C1509($config.outputDirectory)=Is object:K8:27)  // even check folders?
+		
+		If (Not:C34($config.outputDirectory.exists))
+			$config.outputDirectory.create()  // TODO: if not log error?
+		End if 
+		
+	End if 
 	
 	// MARK:- build
 Function build()->$status : Object
@@ -154,7 +166,7 @@ Function build()->$status : Object
 	var $temp4DZs : Collection
 	$temp4DZs:=New collection:C1472
 	
-	$config.file:=File:C1566(This:C1470.config.path)  // used to get parents directory (for instance to get components)
+	$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
 	
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
@@ -162,6 +174,35 @@ Function build()->$status : Object
 	End if 
 	
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
+	
+	If ($config.outputDirectory#Null:C1517)
+		
+		var $baseFolder; $outputDir; $tmpFolder : 4D:C1709.Folder
+		var $tmpFile : 4D:C1709.File
+		$baseFolder:=$config.file.parent.parent
+		$outputDir:=$config.outputDirectory.folder($config.file.name+".4dbase")
+		If ($outputDir.exists)
+			$outputDir.delete(fk recursive:K87:7)
+		End if 
+		If (Not:C34($outputDir.exists))
+			$outputDir.create()
+		End if 
+		For each ($tmpFile; $baseFolder.files())
+			$tmpFile.copyTo($outputDir)
+		End for each 
+		For each ($tmpFolder; $baseFolder.folders())
+			If (($outputDir.parent.path#$tmpFolder.path)\
+				 && ($tmpFolder.fullName#"Components")\
+				 && (Position:C15("userPreferences."; $tmpFolder.fullName)#1)\
+				 && (Position:C15(".git"; $tmpFolder.fullName)#1))
+				$tmpFolder.copyTo($outputDir)
+			End if 
+		End for each 
+		
+		$config.file:=$outputDir.folder("Project").file($config.file.fullName)
+		
+	End if 
+	
 	
 	$status:=Compile project:C1760($config.file; $config.options)
 	
@@ -229,6 +270,10 @@ Function _checkCompilationOptions($options : Variant) : Object
 	
 	If (This:C1470.config.actions.includes("release") && ($options.targets=Null:C1517))
 		$options.targets:="all"
+	End if 
+	
+	If ((This:C1470.config.outputDirectory#Null:C1517) && ($options.targets=Null:C1517))  // if an output we want to build something
+		$options.targets:=Is Windows:C1573 ? "current" : "all"
 	End if 
 	
 	If ((Value type:C1509($options.targets)=Is text:K8:3) && (Length:C16($options.targets)>0))
@@ -429,11 +474,64 @@ Function _not4DName($text : Text) : Text
 	End for each 
 	return $text
 	
+	// MARK:- pack
+	
+Function pack() : Object
+	var $status : Object
+	$status:=New object:C1471("success"; True:C214)
+	
+	If (This:C1470.config.outputDirectory=Null:C1517)
+		$status.success:=False:C215
+		$status.errors:=New collection:C1472("Must have defined an output directory")
+		return $status
+	End if 
+	
+	var $config : Object
+	$config:=This:C1470.config
+	
+	var $packFile : 4D:C1709.File
+	$packFile:=$config.file.parent.parent.file($config.file.name+".4DZ")
+	
+	var $projectFolder : 4D:C1709.Folder
+	$projectFolder:=$config.file.parent
+	$status:=ZIP Create archive:C1640($projectFolder; $packFile; ZIP Without enclosing folder:K91:7)
+	
+	If ($status.success)
+		$projectFolder.delete(fk recursive:K87:7)
+	End if 
+	
+	return $status
+	
+	// MARK:- sign
+	
+Function sign() : Object
+	
+	var $config : Object
+	$config:=This:C1470.config
+	
+	var $baseFolder : 4D:C1709.Folder
+	$baseFolder:=$config.file.parent.parent
+	
+	var $appResources : 4D:C1709.Folder
+	Case of 
+		: (Is Windows:C1573)
+			$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
+		: (Is macOS:C1572)
+			$appResources:=Folder:C1567(Application file:C491; fk platform path:K87:2).folder("Contents").folder("Resources")
+		Else 
+			$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
+	End case 
+	
+	$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
+	
+	
 	// MARK:- release
 	
 Function release()->$status : Object
 	var $config : Object
-	$config:=This:C1470.config
+	$config:=OB Copy:C1225(This:C1470.config)
+	
+	$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
 	
 	var $databaseFolder : 4D:C1709.Folder
 	$databaseFolder:=$config.file.parent.parent

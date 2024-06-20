@@ -28,8 +28,14 @@ Else
 	ASSERT:C1129($status.success; JSON Stringify:C1217($status))
 End if 
 
-// MARK:- test on self with compile target option to all
+// MARK:- test on self with output dir
 $config:=New object:C1471("outputDirectory"; Folder:C1567(fk database folder:K87:14).folder("build").platformPath)
+$actions:=cs:C1710.actions.new($config)
+$status:=$actions.run()
+ASSERT:C1129($status.success; JSON Stringify:C1217($status))
+
+// MARK:- test on self with action pack
+$config:=New object:C1471("actions"; "pack")
 $actions:=cs:C1710.actions.new($config)
 $status:=$actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))
