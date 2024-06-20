@@ -1,3 +1,23 @@
 {
+	"error": {
+		"methods": [
+			"onError",
+			"onFlagError",
+			"SetErrorStatus"
+		]
+	},
+	"test": {
+		"methods": [
+			"test"
+		]
+	},
+	"utility": {
+		"methods": [
+			"isTruthly"
+		],
+		"classes": [
+			"github"
+		]
+	},
 	"trash": {}
 }

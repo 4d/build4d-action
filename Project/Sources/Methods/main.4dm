@@ -21,16 +21,13 @@ Storage:C1525.github.info("...parsing parameters")
 
 var $config : Object
 $config:=JSON Parse:C1218($startupParam)
-If (Length:C16(String:C10($config.errorFlag))>0)
-	Use (Storage:C1525.exit)
-		Storage:C1525.exit.errorFlag:=String:C10($config.errorFlag)
-		Storage:C1525.github.debug("error flag defined to "+String:C10($config.errorFlag))
-	End use 
-End if 
 
 var $actions : cs:C1710.actions
 $actions:=cs:C1710.actions.new($config)
 
-$actions.run()
+Storage:C1525.github.info("...running actions")
+
+var $status : Object
+$status:=$actions.run()
 
 Storage:C1525.github.debug("it's over")

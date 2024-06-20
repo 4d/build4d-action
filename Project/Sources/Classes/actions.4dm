@@ -1,21 +1,32 @@
 Class constructor($config : Object)
+	This:C1470._setup($config)
+	
+Function _setup($config : Object)
 	This:C1470.config:=$config
-	
-	
-	
-	If ($config.debug#Null:C1517)
-		$config.debug:=isTruthly($config.debug)
+	If (This:C1470.config=Null:C1517)
+		This:C1470.config:=New object:C1471
 	End if 
-	If (Structure file:C489(*)=Structure file:C489())  // this base to test
-		$config.debug:=True:C214
+	
+	If (Length:C16(String:C10($config.errorFlag))>0)
+		Use (Storage:C1525.exit)
+			Storage:C1525.exit.errorFlag:=String:C10($config.errorFlag)
+			Storage:C1525.github.debug("error flag defined to "+String:C10($config.errorFlag))
+		End use 
 	End if 
+	
+	Case of 
+		: ($config.debug#Null:C1517)
+			$config.debug:=isTruthly($config.debug)
+		Else 
+			$config.debug:=(Structure file:C489(*)=Structure file:C489())
+	End case 
+	Use (Storage:C1525.github)
+		Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
+	End use 
 	
 	$config.ignoreWarnings:=isTruthly($config.ignoreWarnings)
 	$config.failOnWarning:=isTruthly($config.failOnWarning)
 	
-	Use (Storage:C1525.github)
-		Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
-	End use 
 	
 	// check "workingDirectory"
 	If (Length:C16(String:C10($config.workingDirectory))>0)
@@ -100,8 +111,6 @@ Class constructor($config : Object)
 			$config.actions.push("release")
 		End if 
 	End if 
-	
-	
 	
 	
 	
@@ -203,10 +212,30 @@ Function _checkCompilationOptions($options : Variant) : Object
 		$options.targets:=Split string:C1554($options.targets; ","; sk ignore empty strings:K86:1)
 	End if 
 	If (Value type:C1509($options.targets)=Is collection:K8:32)
-		$options.targets:=$options.targets.flatMap("CheckTargetName").filter(Formula:C1597($1.value#Null:C1517))
+		$options.targets:=$options.targets.flatMap(This:C1470._fCheckTargetName).filter(Formula:C1597($1.value#Null:C1517))
 	End if 
 	
 	return $options
+	
+Function _fCheckTargetName($object : Object)
+	
+	Case of 
+		: (New collection:C1472("x86_64_generic"; "arm64_macOS_lib").includes($object.value))
+			$object.result:=$object.value
+		: (Not:C34(Value type:C1509($object.value)=Is text:K8:3))
+			$object.result:=Null:C1517
+		: ($object.value="current")
+			$object.result:=(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
+		: (($object.value="x86_64") || ($object.value="x86-64") || ($object.value="x64") || ($object.value="AMD64") || ($object.value="Intel 64"))
+			$object.result:="x86_64_generic"
+		: ($object.value="arm64")
+			$object.result:="arm64_macOS_lib"
+		: ($object.value="all")
+			$object.result:=New collection:C1472("arm64_macOS_lib"; "x86_64_generic")
+		Else 
+			Storage:C1525.github.warning("Unknown target "+String:C10($object.value))
+			$object.result:=Null:C1517
+	End case 
 	
 	// $error content :
 	//   message: Text
@@ -329,7 +358,6 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 	For each ($dependencyFile; $componentsFolder.files().filter(Formula:C1597($1.value.extension=".4DZ")))
 		$config.options.components.push($dependencyFile)
 	End for each 
-	
 	
 Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 	var $compiledCodeFolder : 4D:C1709.Folder
@@ -496,11 +524,13 @@ Function run() : Object
 		: (Length:C16(String:C10(This:C1470.config.path))=0)
 			
 			Storage:C1525.github.error("no correct project file path provided")
+			$status.errors:=New collection:C1472("no correct project file path provided")
 			$status.success:=False:C215
 			
 		: (Not:C34(File:C1566(This:C1470.config.path).exists))
 			
 			Storage:C1525.github.error("project file "+This:C1470.config.path+" do not exists")
+			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" do not exists")
 			$status.success:=False:C215
 			
 		Else 
@@ -513,9 +543,10 @@ Function run() : Object
 			
 			var $action : Text
 			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
-				If ((OB Instance of:C1731(This:C1470.config.actions[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1) && ($action#"run"))
+				If ((OB Instance of:C1731(This:C1470[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1) && ($action#"run"))
 					Storage:C1525.github.notice("action "+$action)
-					$status:=This:C1470.config.actions[$action].call(This:C1470.config.actions)
+					$status[$action]:=This:C1470[$action].call(This:C1470)
+					$status.success:=$status.success & Bool:C1537($status[$action].success)
 				Else 
 					Storage:C1525.github.error("Unknown action "+$action)
 					$status.success:=False:C215
