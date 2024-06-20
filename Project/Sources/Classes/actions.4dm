@@ -128,9 +128,9 @@ Function _setup($config : Object)
 	If ($config.actions.includes("pack") && Not:C34($config.actions.includes("build")))
 		
 		$config.actions.unshift("build")
+		Storage:C1525.github.debug("Action build added, because pack action defined")
 		
 	End if 
-	
 	
 	
 	If ($config.outputDirectory#Null:C1517)
@@ -154,6 +154,7 @@ Function _setup($config : Object)
 	
 	If (Not:C34($config.actions.includes("sign")) && ($config.signCertificate#Null:C1517) && (Length:C16(String:C10($config.signCertificate))>0))
 		$config.actions.push("sign")
+		Storage:C1525.github.debug("Action sign added, because sign certificate defined")
 	End if 
 	
 	If ((Value type:C1509($config.signFiles)=Is text:K8:3) && (Length:C16($config.signFiles)>0))
@@ -580,6 +581,8 @@ Function sign() : Object
 	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
 	
 	// Sign base
+	
+	Storage:C1525.github.notice("Sign "+$baseFolder.path)
 	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
 	
 	var $worker : 4D:C1709.SystemWorker
@@ -594,6 +597,7 @@ Function sign() : Object
 	
 	var $status : Object
 	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
+	Storage:C1525.github.debug(JSON Stringify:C1217($status))
 	
 	If (($status.success) && Value type:C1509($config.signFiles)=Is collection:K8:32)
 		
@@ -624,6 +628,7 @@ Function sign() : Object
 				End if 
 				$status.errors.combine($worker.errors)
 			End if 
+			Storage:C1525.github.debug(JSON Stringify:C1217($status))
 			
 		End for each 
 	End if 
@@ -643,10 +648,15 @@ Function archive() : Object
 	This:C1470._cleanDatabase($baseFolder)
 	var $status : Object
 	
+	Storage:C1525.github.debug("Action build added, because pack action defined")
+	
+	var $archiveFile : 4D:C1709.File
+	$archiveFile:=$baseFolder.parent.file($config.file.name+".zip")
+	
 	If (Is macOS:C1572)
 		var $cmd : Text
 		
-		$cmd:="ditto -c -k --rsrc --sequesterRsrc --keepParent \""+$baseFolder.path+"\" \""+$baseFolder.parent.file($config.file.name+".zip").path+"\""
+		$cmd:="ditto -c -k --rsrc --sequesterRsrc --keepParent \""+$baseFolder.path+"\" \""+$archiveFile.path+"\""
 		
 		var $worker : 4D:C1709.SystemWorker
 		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
@@ -660,14 +670,20 @@ Function archive() : Object
 		
 		$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
 		
-		return $status
-		
 	Else 
 		
-		$status:=ZIP Create archive:C1640($baseFolder; $baseFolder.parent.file($config.file.name+".zip"))
+		$status:=ZIP Create archive:C1640($baseFolder; $archiveFile)
 		
-		return $status
 	End if 
+	
+	If (Bool:C1537($status.success))
+		Storage:C1525.github.info("Archive created at path "+$archiveFile.path)
+	Else 
+		Storage:C1525.github.error("Failed to archive "+$baseFolder.path)
+	End if 
+	Storage:C1525.github.debug(JSON Stringify:C1217($status))
+	
+	return $status
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
 	
