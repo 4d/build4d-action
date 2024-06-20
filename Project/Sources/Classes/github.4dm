@@ -1,6 +1,6 @@
 Class constructor
 	This:C1470.isDebug:=False:C215
-	This:C1470.isDev:=Structure file:C489(*)=Structure file:C489()
+	This:C1470.isDev:=isDev
 	
 	// MARK:-  log
 Function info($message : Text)

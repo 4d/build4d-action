@@ -18,7 +18,7 @@ Function _setup($config : Object)
 		: ($config.debug#Null:C1517)
 			$config.debug:=isTruthly($config.debug)
 		Else 
-			$config.debug:=(Structure file:C489(*)=Structure file:C489())
+			$config.debug:=isDev
 	End case 
 	Use (Storage:C1525.github)
 		Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
@@ -36,7 +36,7 @@ Function _setup($config : Object)
 	Else 
 		// CLEAN: see env var ? any means using 4D?
 		
-		If (Structure file:C489(*)=Structure file:C489())  // this base to test
+		If (isDev)  // this base to test
 			If (Is Windows:C1573)
 				$config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
 			Else 
@@ -45,6 +45,7 @@ Function _setup($config : Object)
 		End if 
 		
 	End if 
+	
 	
 	// check "path"
 	If (Length:C16(String:C10($config.path))=0)
@@ -94,6 +95,23 @@ Function _setup($config : Object)
 		
 	End if 
 	
+	If ($config.outputDirectory#Null:C1517)
+		
+		If (Value type:C1509($config.outputDirectory)=Is text:K8:3)
+			If (Is Windows:C1573)
+				$config.outputDirectory:=Replace string:C233($config.outputDirectory; "\\"; "/")
+			End if 
+			$config.outputDirectory:=Folder:C1567($config.outputDirectory)
+		End if 
+		
+		ASSERT:C1129(Value type:C1509($config.outputDirectory)=Is object:K8:27)  // even check folders?
+		
+		If (Not:C34($config.outputDirectory.exists))
+			$config.outputDirectory.create()  // TODO: if not log error?
+		End if 
+		
+	End if 
+	
 	// check actions
 	If ((Value type:C1509($config.actions)=Is text:K8:3) && (Length:C16($config.actions)>0))
 		If ($config.actions[[1]]="[")
@@ -135,6 +153,8 @@ Function build()->$status : Object
 	var $dependencyFile : 4D:C1709.File
 	var $temp4DZs : Collection
 	$temp4DZs:=New collection:C1472
+	
+	$config.file:=File:C1566(This:C1470.config.path)  // used to get parents directory (for instance to get components)
 	
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
@@ -527,6 +547,12 @@ Function run() : Object
 			$status.errors:=New collection:C1472("no correct project file path provided")
 			$status.success:=False:C215
 			
+		: (File:C1566(This:C1470.config.path)=Null:C1517)  // just because it failed with mixed / and \ TODO: clean path
+			
+			Storage:C1525.github.error("project file "+This:C1470.config.path+" cannot be parsed")
+			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" cannot be parsed")
+			$status.success:=False:C215
+			
 		: (Not:C34(File:C1566(This:C1470.config.path).exists))
 			
 			Storage:C1525.github.error("project file "+This:C1470.config.path+" do not exists")
@@ -536,8 +562,6 @@ Function run() : Object
 		Else 
 			
 			Storage:C1525.github.debug("path="+String:C10(This:C1470.config.path))
-			
-			This:C1470.config.file:=File:C1566(This:C1470.config.path)  // used to get parents directory (for instance to get components)
 			
 			Storage:C1525.github.debug("...will execute actions: "+This:C1470.config.actions.join(","))
 			

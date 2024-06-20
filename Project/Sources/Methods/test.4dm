@@ -12,7 +12,7 @@ $status:=$actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))
 
 
-// MARK:- test on self without option
+// MARK:- test on self with compile target option to all
 $config:=New object:C1471("options"; New object:C1471("targets"; "all"))
 $actions:=cs:C1710.actions.new($config)
 $status:=$actions.run()
@@ -22,3 +22,9 @@ If (Is Windows:C1573)
 Else 
 	ASSERT:C1129($status.success; JSON Stringify:C1217($status))
 End if 
+
+// MARK:- test on self with compile target option to all
+$config:=New object:C1471("outputDirectory"; Folder:C1567(fk database folder:K87:14).folder("build").platformPath)
+$actions:=cs:C1710.actions.new($config)
+$status:=$actions.run()
+ASSERT:C1129($status.success; JSON Stringify:C1217($status))

@@ -4,6 +4,9 @@
 			"onError",
 			"onFlagError",
 			"SetErrorStatus"
+		],
+		"classes": [
+			"exit"
 		]
 	},
 	"test": {
@@ -13,6 +16,7 @@
 	},
 	"utility": {
 		"methods": [
+			"isDev",
 			"isTruthly"
 		],
 		"classes": [

@@ -37,7 +37,7 @@ End for
 
 SetErrorStatus("onError")
 
-If (Structure file:C489(*)=Structure file:C489())  // dev
+If (isDev)
 	TRACE:C157
 Else 
 	QUIT 4D:C291

@@ -9,7 +9,7 @@ var $startupParam : Text
 $r:=Get database parameter:C643(User param value:K37:94; $startupParam)
 
 If (Length:C16($startupParam)=0)
-	If (Structure file:C489(*)=Structure file:C489())  // dev
+	If (isDev)
 		$startupParam:="{}"
 	Else 
 		Storage:C1525.github.error("No parameters passed to database")
