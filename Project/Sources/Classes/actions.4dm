@@ -226,6 +226,11 @@ Function build()->$status : Object
 		
 	End if 
 	
+	If ($config.file=Null:C1517)  // check it or the current base will be compiled instead
+		Storage:C1525.github.error("‼️ Build failure: cannot get file to compile")
+		$status.success:=False:C215
+		return $status
+	End if 
 	
 	$status:=Compile project:C1760($config.file; $config.options)
 	
