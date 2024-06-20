@@ -128,6 +128,9 @@ Function _setup($config : Object)
 	End if 
 	
 	
+	If (($config.outputDirectory#Null:C1517) && (Value type:C1509($config.outputDirectory)=Is text:K8:3) && (Length:C16($config.outputDirectory)=0))
+		$config.outputDirectory:=Null:C1517
+	End if 
 	
 	If ($config.outputDirectory#Null:C1517)
 		
@@ -148,11 +151,11 @@ Function _setup($config : Object)
 		
 	End if 
 	
-	If (($config.signCertificate#Null:C1517) && Not:C34($config.actions.includes("sign")))
+	If (Not:C34($config.actions.includes("sign")) && ($config.signCertificate#Null:C1517) && (Length:C16(String:C10($config.signCertificate))>0))
 		$config.actions.push("sign")
 	End if 
 	
-	If (Value type:C1509($config.signFiles)=Is text:K8:3)
+	If ((Value type:C1509($config.signFiles)=Is text:K8:3) && (Length:C16($config.signFiles)>0))
 		If ($config.signFiles[[1]]="[")
 			$config.signFiles:=JSON Parse:C1218($config.signFiles)
 		Else 
