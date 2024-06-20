@@ -640,7 +640,7 @@ Function archive() : Object
 	If (Is macOS:C1572)
 		var $cmd : Text
 		
-		$cmd:="ditto -c -k --sequesterRsrc --keepParent \""+$baseFolder.path+"\" \""+$baseFolder.parent.file($config.file.name+".zip").path+"\""
+		$cmd:="ditto -c -k --rsrc --sequesterRsrc --keepParent \""+$baseFolder.path+"\" \""+$baseFolder.parent.file($config.file.name+".zip").path+"\""
 		
 		var $worker : 4D:C1709.SystemWorker
 		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
