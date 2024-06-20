@@ -104,13 +104,27 @@ Function _setup($config : Object)
 			$config.actions:=Split string:C1554(String:C10($config.actions); ",")
 		End if 
 	End if 
+	
 	If (Value type:C1509($config.actions)#Is collection:K8:32)
 		$config.actions:=New collection:C1472
 	End if 
+	
 	If ($config.actions.length=0)
 		$config.actions.push("build")
 		If (Bool:C1537(Num:C11(String:C10(Storage:C1525.github._parseEnv()["RELEASE"]))))
 			$config.actions.push("release")
+		End if 
+	End if 
+	
+	If ($config.signCertificate#Null:C1517)
+		$config.actions.push("sign")
+	End if 
+	
+	If (Value type:C1509($config.signFiles)=Is text:K8:3)
+		If ($config.signFiles[[1]]="[")
+			$config.signFiles:=JSON Parse:C1218($config.signFiles)
+		Else 
+			$config.signFiles:=Split string:C1554(String:C10($config.signFiles); ",")
 		End if 
 	End if 
 	
@@ -512,17 +526,83 @@ Function sign() : Object
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=$config.file.parent.parent
 	
-	var $appResources : 4D:C1709.Folder
-	Case of 
-		: (Is Windows:C1573)
-			$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
-		: (Is macOS:C1572)
-			$appResources:=Folder:C1567(Application file:C491; fk platform path:K87:2).folder("Contents").folder("Resources")
-		Else 
-			$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
-	End case 
+	If (Is macOS:C1572)
+		Storage:C1525.github.warning("Signature ignored on this OS")
+		return New object:C1471("success"; True:C214)
+	End if 
 	
-	$appResources:=File:C1566(Application file:C491; fk platform path:K87:2).parent.folder("Resources")
+	var $signScriptFile : 4D:C1709.File
+	$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/SignApp.sh")
+	
+	If (Not:C34($signScriptFile.exists))
+		Storage:C1525.github.error("No SignApp.sh script")
+		return New object:C1471("success"; False:C215)
+	End if 
+	
+	var $entitlementsFile : 4D:C1709.File
+	$entitlementsFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/4D.entitlements")
+	// customize by config?
+	
+	var $certificateName : Text
+	$certificateName:=String:C10($config.signCertificate)
+	If (Length:C16($certificateName)=0)
+		Storage:C1525.github.error("No certificate name specified")
+		return New object:C1471("success"; False:C215)
+	End if 
+	
+	var $cmdBase; $cmd : Text
+	$cmdBase:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" \""+$entitlementsFile.path+"\" "
+	
+	// Sign base
+	$cmd:=$cmdBase+"\""+$baseFolder.path+"\""
+	
+	var $worker : 4D:C1709.SystemWorker
+	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+	
+	If ($worker.response#Null:C1517)
+		Storage:C1525.github.info($worker.response)
+	End if 
+	If ($worker.responseError#Null:C1517)
+		Storage:C1525.github.warning($worker.responseError)
+	End if 
+	
+	var $status : Object
+	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
+	
+	If (($status.success) && Value type:C1509($config.signFiles)=Is collection:K8:32)
+		
+		var $signFile : 4D:C1709.File
+		var $signFilePath : Text
+		For each ($signFilePath; $config.signFiles)
+			Storage:C1525.github.notice("Sign "+$signFilePath)
+			
+			$signFile:=$baseFolder.file($signFilePath)
+			
+			$cmd:=$cmdBase+"\""+$signFile.path+"\""
+			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+			
+			If ($worker.response#Null:C1517)
+				Storage:C1525.github.info($worker.response)
+			End if 
+			If ($worker.responseError#Null:C1517)
+				Storage:C1525.github.warning($worker.responseError)
+			End if 
+			
+			If ($worker.exitCode#0)
+				$status.success:=False:C215
+			End if 
+			
+			If ($worker.errors#Null:C1517)
+				If ($status.errors=Null:C1517)
+					$status.errors:=New collection:C1472
+				End if 
+				$status.errors.combine($worker.errors)
+			End if 
+			
+		End for each 
+	End if 
+	
+	return $status
 	
 	
 	// MARK:- release
