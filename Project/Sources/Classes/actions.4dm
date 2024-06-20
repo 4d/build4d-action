@@ -165,6 +165,7 @@ Function _setup($config : Object)
 		End if 
 	End if 
 	
+	
 	// MARK:- build
 Function build()->$status : Object
 	var $config : Object
@@ -737,6 +738,8 @@ Function run() : Object
 			
 			Storage:C1525.github.debug("...will execute actions: "+This:C1470.config.actions.join(","))
 			
+			This:C1470._sortActions(This:C1470.config.actions)
+			
 			var $action : Text
 			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
 				If ((OB Instance of:C1731(This:C1470[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1) && ($action#"run"))
@@ -752,5 +755,20 @@ Function run() : Object
 	End case 
 	
 	return $status
+	
+Function _sortActions($actions : Collection)
+	// TODO: do better sort with some weight , expected order
+	
+	// for the moment put at the end archive
+	var $archiveIndex : Integer
+	$archiveIndex:=$actions.indexOf("archive")
+	If ($archiveIndex>=0)
+		
+		If ($archiveIndex#($actions.length-1))
+			$actions.remove($archiveIndex)
+			$actions.push("archive")
+		End if 
+		
+	End if 
 	
 	
