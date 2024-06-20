@@ -113,6 +113,9 @@ Function _setup($config : Object)
 		$config.actions.push("build")
 	End if 
 	
+	If (($config.outputDirectory#Null:C1517) && (Value type:C1509($config.outputDirectory)=Is text:K8:3) && (Length:C16($config.outputDirectory)=0))
+		$config.outputDirectory:=Null:C1517
+	End if 
 	
 	If ($config.actions.includes("pack") && ($config.outputDirectory=Null:C1517))
 		
@@ -129,9 +132,6 @@ Function _setup($config : Object)
 	End if 
 	
 	
-	If (($config.outputDirectory#Null:C1517) && (Value type:C1509($config.outputDirectory)=Is text:K8:3) && (Length:C16($config.outputDirectory)=0))
-		$config.outputDirectory:=Null:C1517
-	End if 
 	
 	If ($config.outputDirectory#Null:C1517)
 		
