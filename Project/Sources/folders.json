@@ -1,3 +1,27 @@
 {
+	"error": {
+		"methods": [
+			"onError",
+			"onFlagError"
+		],
+		"classes": [
+			"exit"
+		]
+	},
+	"test": {
+		"methods": [
+			"test"
+		]
+	},
+	"utility": {
+		"methods": [
+			"Compiler_Methods",
+			"isDev",
+			"isTruthly"
+		],
+		"classes": [
+			"github"
+		]
+	},
 	"trash": {}
 }

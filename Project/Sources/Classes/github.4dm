@@ -1,6 +1,6 @@
 Class constructor
 	This:C1470.isDebug:=False:C215
-	This:C1470.isDev:=Structure file:C489(*)=Structure file:C489()
+	This:C1470.isDev:=isDev
 	
 	// MARK:-  log
 Function info($message : Text)
@@ -14,7 +14,7 @@ Function notice($message : Text; $parameters : Object)
 	
 Function error($message : Text; $parameters : Object)
 	This:C1470.cmd("error"; $message+"\n"; Error message:K38:3; $parameters)
-	SetErrorStatus("errorLog")
+	Storage:C1525.exit.setErrorStatus("errorLog")
 	
 Function warning($message : Text; $parameters : Object)
 	This:C1470.cmd("warning"; $message+"\n"; Information message:K38:1/*Warning message, to test*/; $parameters)
@@ -154,7 +154,7 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 	
 	
 	// MARK:- artefact
-Function postArtefact($artefact : 4D:C1709.File)->$result : Object
+Function postArtefactToRelease($artefact : 4D:C1709.File)->$result : Object
 	var $env : Object
 	$env:=This:C1470._parseEnv()
 	

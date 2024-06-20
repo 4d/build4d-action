@@ -35,7 +35,19 @@ inputs:
     required: false
     default: "False"
   actions:   
-    description: "\"build\""
+    description: "One or more among \"build\",\"pack\",\"sign\",\"archive\""
+    required: false
+    default: ""
+  output-directory:   
+    description: "Directory to output build. Default is \"build\""
+    required: false
+    default: ""
+  sign-certificate:   
+    description: "Name of the certificate to use. Mandatory to sign on macOS."
+    required: false
+    default: ""
+  sign-files:   
+    description: "List of file paths to sign too relative to base folder"
     required: false
     default: ""
 
@@ -84,6 +96,9 @@ runs:
         project: "${{env.GITHUB_THIS_ACTION_PATH}}/Project/actions.4DProject"
         user-param: '{"path": "${{ inputs.project }}", "workingDirectory": "${{ env.WORKINK_DIRECTORY }}",
           "actions":"${{ inputs.actions }}",
+          "outputDirectory":"${{ inputs.output-directory }}",
+          "signCertificate":"${{ inputs.sign-certificate }}",
+          "signFiles":"${{ inputs.sign-files }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

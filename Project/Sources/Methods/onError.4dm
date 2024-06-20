@@ -35,9 +35,9 @@ For ($i; 1; Size of array:C274($textArray); 1)
 	Storage:C1525.github.error($textArray{$i}; $metadata)
 End for 
 
-SetErrorStatus("onError")
+Storage:C1525.exit.setErrorStatus("onError")
 
-If (Structure file:C489(*)=Structure file:C489())  // dev
+If (isDev)
 	TRACE:C157
 Else 
 	QUIT 4D:C291
