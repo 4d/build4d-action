@@ -635,6 +635,7 @@ Function archive() : Object
 	$baseFolder:=$config.file.parent.parent
 	
 	This:C1470._cleanDatabase($baseFolder)
+	var $status : Object
 	
 	If (Is macOS:C1572)
 		var $cmd : Text
@@ -651,15 +652,15 @@ Function archive() : Object
 			Storage:C1525.github.warning($worker.responseError)
 		End if 
 		
-		var $status : Object
 		$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
 		
 		return $status
+		
 	Else 
 		
-		//ZIP Create archive()
-		Storage:C1525.github.error("Archive not implemented for this os")
-		return New object:C1471("success"; False:C215)
+		$status:=ZIP Create archive:C1640($baseFolder; $baseFolder.parent.file($config.file.name+".zip"))
+		
+		return $status
 	End if 
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
