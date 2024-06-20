@@ -215,7 +215,9 @@ Function build()->$status : Object
 			If (($outputDir.parent.path#$tmpFolder.path)\
 				 && ($tmpFolder.fullName#"Components")\
 				 && (Position:C15("userPreferences."; $tmpFolder.fullName)#1)\
-				 && (Position:C15(".git"; $tmpFolder.fullName)#1))
+				 && (Position:C15(".git"; $tmpFolder.fullName)#1)\
+				 && ($tmpFolder.fullName#"tool4d.app")\
+				 && ($tmpFolder.fullName#"tool4d"))
 				$tmpFolder.copyTo($outputDir)
 			End if 
 		End for each 
