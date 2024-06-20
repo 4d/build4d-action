@@ -116,17 +116,6 @@ Function _setup($config : Object)
 		End if 
 	End if 
 	
-	If ($config.signCertificate#Null:C1517)
-		$config.actions.push("sign")
-	End if 
-	
-	If (Value type:C1509($config.signFiles)=Is text:K8:3)
-		If ($config.signFiles[[1]]="[")
-			$config.signFiles:=JSON Parse:C1218($config.signFiles)
-		Else 
-			$config.signFiles:=Split string:C1554(String:C10($config.signFiles); ",")
-		End if 
-	End if 
 	
 	If ($config.actions.includes("pack") && ($config.outputDirectory=Null:C1517))
 		
@@ -140,6 +129,8 @@ Function _setup($config : Object)
 		$config.actions.unshift("build")
 		
 	End if 
+	
+	
 	
 	If ($config.outputDirectory#Null:C1517)
 		
@@ -156,6 +147,18 @@ Function _setup($config : Object)
 			$config.outputDirectory.create()  // TODO: if not log error?
 		End if 
 		
+	End if 
+	
+	If ($config.signCertificate#Null:C1517)
+		$config.actions.push("sign")
+	End if 
+	
+	If (Value type:C1509($config.signFiles)=Is text:K8:3)
+		If ($config.signFiles[[1]]="[")
+			$config.signFiles:=JSON Parse:C1218($config.signFiles)
+		Else 
+			$config.signFiles:=Split string:C1554(String:C10($config.signFiles); ",")
+		End if 
 	End if 
 	
 	// MARK:- build
