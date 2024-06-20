@@ -71,6 +71,10 @@ jobs:
 
 You could pass the path of the project to compile it, if the project is not inside the `Project` folder.
 
+#### choosing 4d version
+
+The options are the same than tool4d-action: https://github.com/4d/tool4d-action#choose-tool4d-version-v1
+
 #### compilations options
 
 See documentation of `Compiler projet` 4d command for more information
@@ -85,9 +89,21 @@ See documentation of `Compiler projet` 4d command for more information
 - `ignore-warnings`: do not display compilation warnings if set to true
 - `fail-on-warning`: by default a warning do not make the task failed, if you want to be more strict you could set this option to true
 
-#### choose 4d version
+#### action options
 
-The options are the same than tool4d-action: https://github.com/4d/tool4d-action#choose-tool4d-version-v1
+You could do more than build. For instance you could pack(create 4DZ), and archive result (into zip)
+
+- `actions`: "build,pack,archive"
+
+##### sign options
+
+To sign add the action
+
+- `actions`: "build,pack,sign,archive"
+
+then you must specify the certificate name that you install in a previous step (using Github secret for instance)
+- `secret-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
+- `secret-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
 
 ## Others
 
