@@ -29,7 +29,7 @@ Else
 End if 
 
 // MARK:- test on self with output dir
-$config:=New object:C1471("outputDirectory"; Folder:C1567(fk database folder:K87:14).folder("build").platformPath)
+$config:=New object:C1471("outputDirectory"; Folder:C1567(fk database folder:K87:14).folder("build").path)
 $actions:=cs:C1710.actions.new($config)
 $status:=$actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))
@@ -39,3 +39,11 @@ $config:=New object:C1471("actions"; "pack")
 $actions:=cs:C1710.actions.new($config)
 $status:=$actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))
+
+// MARK:- test on self with action pack and sign
+If (Is macOS:C1572)
+	$config:=New object:C1471("actions"; "pack"; "signCertificate"; "Developer ID")
+	$actions:=cs:C1710.actions.new($config)
+	$status:=$actions.run()
+	ASSERT:C1129($status.success; JSON Stringify:C1217($status))
+End if 

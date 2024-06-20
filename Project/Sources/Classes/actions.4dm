@@ -147,9 +147,11 @@ Function _setup($config : Object)
 			$config.outputDirectory.create()  // TODO: if not log error?
 		End if 
 		
+		$config.outputDirectory:=Folder:C1567($config.outputDirectory.platformPath; fk platform path:K87:2)  // unbox
+		
 	End if 
 	
-	If ($config.signCertificate#Null:C1517)
+	If (($config.signCertificate#Null:C1517) && Not:C34($config.actions.includes("sign")))
 		$config.actions.push("sign")
 	End if 
 	
@@ -176,7 +178,7 @@ Function build()->$status : Object
 		: (Value type:C1509($config.options)=Is object:K8:27)
 			$config.options:=This:C1470._checkCompilationOptions($config.options)
 		Else 
-			$config.options:=New object:C1471
+			$config.options:=This:C1470._checkCompilationOptions(New object:C1471)
 	End case 
 	
 	var $dependencyFile : 4D:C1709.File
@@ -199,7 +201,12 @@ Function build()->$status : Object
 		$baseFolder:=$config.file.parent.parent
 		$outputDir:=$config.outputDirectory.folder($config.file.name+".4dbase")
 		If ($outputDir.exists)
-			$outputDir.delete(fk recursive:K87:7)
+			If (Not:C34($outputDir.delete(fk recursive:K87:7)))
+				
+				Storage:C1525.error("Failed to clean output directory")
+				$status:=New object:C1471("success"; False:C215; "errors"; New collection:C1472("Failed to clean output directory"))
+				return $status
+			End if 
 		End if 
 		If (Not:C34($outputDir.exists))
 			$outputDir.create()
@@ -529,7 +536,7 @@ Function sign() : Object
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=$config.file.parent.parent
 	
-	If (Is macOS:C1572)
+	If (Not:C34(Is macOS:C1572))
 		Storage:C1525.github.warning("Signature ignored on this OS")
 		return New object:C1471("success"; True:C214)
 	End if 
@@ -539,25 +546,30 @@ Function sign() : Object
 	
 	If (Not:C34($signScriptFile.exists))
 		Storage:C1525.github.error("No SignApp.sh script")
-		return New object:C1471("success"; False:C215)
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No SignApp.sh script"))
 	End if 
 	
 	var $entitlementsFile : 4D:C1709.File
 	$entitlementsFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/4D.entitlements")
+	If (Not:C34($entitlementsFile.exists))
+		Storage:C1525.github.error("No entitlements files")
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
+	End if 
 	// customize by config?
 	
 	var $certificateName : Text
 	$certificateName:=String:C10($config.signCertificate)
 	If (Length:C16($certificateName)=0)
 		Storage:C1525.github.error("No certificate name specified")
-		return New object:C1471("success"; False:C215)
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No certificate name specified"))
 	End if 
 	
-	var $cmdBase; $cmd : Text
-	$cmdBase:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" \""+$entitlementsFile.path+"\" "
+	var $cmdPrefix; $cmdSuffix; $cmd : Text
+	$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
+	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
 	
 	// Sign base
-	$cmd:=$cmdBase+"\""+$baseFolder.path+"\""
+	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
 	
 	var $worker : 4D:C1709.SystemWorker
 	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
@@ -581,7 +593,7 @@ Function sign() : Object
 			
 			$signFile:=$baseFolder.file($signFilePath)
 			
-			$cmd:=$cmdBase+"\""+$signFile.path+"\""
+			$cmd:=$cmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
 			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 			
 			If ($worker.response#Null:C1517)
