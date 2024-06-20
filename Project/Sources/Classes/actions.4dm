@@ -176,14 +176,16 @@ Function build()->$status : Object
 			Storage:C1525.github.addToSummary("## ‼️ Build failure")
 			
 		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Bool:C1537($config.failOnWarning))
-			Storage:C1525.github.warning("‼️ Build failure due to warnings")
+			Storage:C1525.github.error("‼️ Build failure due to warnings")
 			Storage:C1525.github.addToSummary("## ‼️ Build failure due to warnings")
+			$status.success:=False:C215
 			
 		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Not:C34(Bool:C1537($config.ignoreWarnings)))
 			Storage:C1525.github.warning("⚠️ Build success with warnings")
 			Storage:C1525.github.addToSummary("## ⚠️ Build success with warnings")
 			
 		Else 
+			
 			Storage:C1525.github.notice("✅ Build success")
 			Storage:C1525.github.addToSummary("## ✅ Build success")
 			
@@ -202,6 +204,7 @@ Function build()->$status : Object
 		Storage:C1525.github.endGroup()
 		
 	End if 
+	
 	
 Function _checkCompilationOptions($options : Variant) : Object
 	If (Value type:C1509($options)#Is object:K8:27)
@@ -292,7 +295,7 @@ Function _reportCompilationError($error : Object)
 	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; $metadata)
 	
 	If (Bool:C1537($error.isError) || Bool:C1537($config.failOnWarning))
-		SetErrorStatus("compilationError")
+		Storage:C1525.exit.setErrorStatus("compilationError")
 	End if 
 	
 Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collection

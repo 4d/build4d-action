@@ -2,8 +2,7 @@
 	"error": {
 		"methods": [
 			"onError",
-			"onFlagError",
-			"SetErrorStatus"
+			"onFlagError"
 		],
 		"classes": [
 			"exit"

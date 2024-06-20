@@ -11,6 +11,11 @@ $actions:=cs:C1710.actions.new($config)
 $status:=$actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))
 
+// MARK:- test on self with failOnWarning (this base has two warning)
+$config:=New object:C1471("failOnWarning"; True:C214)
+$actions:=cs:C1710.actions.new($config)
+$status:=$actions.run()
+ASSERT:C1129(Not:C34($status.success); JSON Stringify:C1217($status))
 
 // MARK:- test on self with compile target option to all
 $config:=New object:C1471("options"; New object:C1471("targets"; "all"))

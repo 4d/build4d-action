@@ -14,7 +14,7 @@ Function notice($message : Text; $parameters : Object)
 	
 Function error($message : Text; $parameters : Object)
 	This:C1470.cmd("error"; $message+"\n"; Error message:K38:3; $parameters)
-	SetErrorStatus("errorLog")
+	Storage:C1525.exit.setErrorStatus("errorLog")
 	
 Function warning($message : Text; $parameters : Object)
 	This:C1470.cmd("warning"; $message+"\n"; Information message:K38:1/*Warning message, to test*/; $parameters)
