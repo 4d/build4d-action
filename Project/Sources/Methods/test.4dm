@@ -47,3 +47,11 @@ If (Is macOS:C1572)
 	$status:=$actions.run()
 	ASSERT:C1129($status.success; JSON Stringify:C1217($status))
 End if 
+
+// MARK:- test on self with action pack and archive
+If (Is macOS:C1572)
+	$config:=New object:C1471("actions"; "pack,archive"; "signCertificate"; "Developer ID")
+	$actions:=cs:C1710.actions.new($config)
+	$status:=$actions.run()
+	ASSERT:C1129($status.success; JSON Stringify:C1217($status))
+End if 

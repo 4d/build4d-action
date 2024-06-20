@@ -209,7 +209,12 @@ Function build()->$status : Object
 			$outputDir.create()
 		End if 
 		For each ($tmpFile; $baseFolder.files())
-			$tmpFile.copyTo($outputDir)
+			
+			If (("tool4d.tar.xz"#$tmpFile.fullName)\
+				 && (".DS_Store"#$tmpFile.fullName))
+				$tmpFile.copyTo($outputDir)
+			End if 
+			
 		End for each 
 		For each ($tmpFolder; $baseFolder.folders())
 			If (($outputDir.parent.path#$tmpFolder.path)\
@@ -618,6 +623,64 @@ Function sign() : Object
 	End if 
 	
 	return $status
+	
+	// MARK:- archive
+	
+Function archive() : Object
+	
+	var $config : Object
+	$config:=This:C1470.config
+	
+	var $baseFolder : 4D:C1709.Folder
+	$baseFolder:=$config.file.parent.parent
+	
+	This:C1470._cleanDatabase($baseFolder)
+	
+	If (Is macOS:C1572)
+		var $cmd : Text
+		
+		$cmd:="ditto -c -k --sequesterRsrc --keepParent \""+$baseFolder.path+"\" \""+$baseFolder.parent.file($config.file.name+".zip").path+"\""
+		
+		var $worker : 4D:C1709.SystemWorker
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		
+		If ($worker.response#Null:C1517)
+			Storage:C1525.github.info($worker.response)
+		End if 
+		If ($worker.responseError#Null:C1517)
+			Storage:C1525.github.warning($worker.responseError)
+		End if 
+		
+		var $status : Object
+		$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
+		
+		return $status
+	Else 
+		
+		//ZIP Create archive()
+		Storage:C1525.github.error("Archive not implemented for this os")
+		return New object:C1471("success"; False:C215)
+	End if 
+	
+Function _cleanDatabase($base : 4D:C1709.Folder)
+	
+	//var $file : 4D.File
+	var $folder : 4D:C1709.Folder
+	
+	// invisible files
+/*For each ($file; $base.files().query("fullName=.@"))
+$file.delete()
+End for each 
+For each ($folder; $base.folders().query("fullName=.@"))
+$folder.delete(Delete with contents)
+End for each */
+	
+	// user pref
+	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
+		$folder.delete(Delete with contents:K24:24)
+	End for each 
+	
+	// Logs folder?
 	
 	
 	// MARK:- run
