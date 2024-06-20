@@ -105,7 +105,7 @@ then you must specify the certificate name that you install in a previous step (
 - `secret-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
 - `secret-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
 
-```json
+```yaml
     - name: Build
       uses: 4d/build4d-action@main
       with:
