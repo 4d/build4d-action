@@ -15,6 +15,7 @@
 	},
 	"utility": {
 		"methods": [
+			"Compiler_Methods",
 			"isDev",
 			"isTruthly"
 		],
