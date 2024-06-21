@@ -92,6 +92,7 @@ Function _setup($config : Object)
 			If ($config.file#Null:C1517)
 				$config.path:=$config.file.path
 			End if 
+			$config.file:=File:C1566($config.file.platformPath; fk platform path:K87:2)  // unbox if needed
 			
 		End if 
 		
@@ -196,7 +197,9 @@ Function build()->$status : Object
 			$config.file:=$config.workingDirectory.file($config.path)
 		End if 
 	End if 
-	
+	If ($config.file#Null:C1517)
+		$config.file:=File:C1566($config.file.platformPath; fk platform path:K87:2)  // unbox if needed
+	End if 
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
 		$temp4DZs:=This:C1470._fillComponents($config)
