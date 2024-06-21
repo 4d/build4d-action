@@ -1,6 +1,7 @@
 Class constructor($github : Object)
 	This:C1470.errorFlag:=$github.temporaryFolder().file("error_flag").path
 	This:C1470.failure:=False:C215
+	This:C1470.isDev:=True:C214
 	
 Function setErrorStatus($from : Text)
 	// to replace exit process status we create a file

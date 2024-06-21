@@ -65,7 +65,9 @@ Function _setup($config : Object)
 		
 	Else 
 		
-		If (Not:C34(File:C1566($config.path).exists))
+		$config.file:=File:C1566($config.path)
+		
+		If (($config.file=Null:C1517) || Not:C34($config.file.exists))
 			
 			$config.relative:=$config.path
 			
@@ -382,14 +384,21 @@ Function _reportCompilationError($error : Object)
 	
 Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collection
 	
+	var $data : Object
 	$dependencies:=New collection:C1472
 	Case of 
+		: ($folder=Null:C1517)
+			// ignore
 		: ($folder.file("make.json").exists)
-			var $data : Object
 			$data:=JSON Parse:C1218($folder.file("make.json").getText())
 			If (Value type:C1509($data.components)=Is collection:K8:32)
 				$dependencies:=$data.components
 			End if 
+		: ($folder.file("Project/Sources/dependencies.json").exists)
+			
+			$data:=JSON Parse:C1218($folder.file("Project/Sources/dependencies.json").getText())
+			$dependencies:=OB Keys:C1719($data.dependencies)
+			
 	End case 
 	
 Function _fillComponents($config : Object)->$temp4DZs : Collection
@@ -397,8 +406,15 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	var $componentsFolder : 4D:C1709.Folder
 	var $componentsFolders : Collection
 	$temp4DZs:=New collection:C1472
-	
+	If ($config.file=Null:C1517)
+		Storage:C1525.github.debug("No file passed to fill components")
+		return $temp4DZs
+	End if 
 	$baseFolder:=$config.file.parent.parent
+	If ($baseFolder=Null:C1517)
+		Storage:C1525.github.debug("No base folder for path "+$config.file.path)
+		return $temp4DZs
+	End if 
 	$componentsFolders:=New collection:C1472($baseFolder.folder("Components"); $baseFolder.folder("Build/Components"))
 	
 	var $dependencies : Collection
