@@ -18,6 +18,7 @@ Case of
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/DatabaseMethods/"+$caller.name+".4dm").path
 	: ($caller.type="classFunction")
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Classes/"+Substring:C12($caller.name; 1; Position:C15("."; $caller.name)-1)+".4dm").path
+		$metadata.function:=Substring:C12($caller.name; Position:C15("."; $caller.name)+1)
 	: ($caller.type="formObjectMethod")
 		If (Position:C15("."; $caller.name)>0)
 			$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Forms/"+Replace string:C233($caller.name; "."; "ObjectMethods")+".4dm").path
