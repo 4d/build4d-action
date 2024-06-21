@@ -30,6 +30,8 @@ End case
 
 $metadata.line:=String:C10($caller.line)  // is it line in file or line in code???
 
+Storage:C1525.github.debug(JSON Stringify:C1217($metadata))
+
 var $i : Integer
 For ($i; 1; Size of array:C274($textArray); 1)
 	Storage:C1525.github.error($textArray{$i}; $metadata)

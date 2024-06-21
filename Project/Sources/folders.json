@@ -1,6 +1,7 @@
 {
 	"error": {
 		"methods": [
+			"_test_onerror",
 			"onError",
 			"onFlagError"
 		],

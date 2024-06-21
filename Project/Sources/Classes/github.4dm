@@ -54,7 +54,7 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	End if 
 	$finalMessage+="::"+String:C10($message)+"\n"
 	LOG EVENT:C667(Into system standard outputs:K38:9; $finalMessage; $level)
-	If (This:C1470.isDev)
+	If (This:C1470.isDev && (Application type:C494#tool4d:K5:70))
 		LOG EVENT:C667(Into 4D debug message:K38:5; $finalMessage+"\n"; $level)
 	End if 
 	
