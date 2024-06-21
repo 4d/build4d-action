@@ -102,8 +102,9 @@ To sign add the action
 - `actions`: "build,pack,sign,archive"
 
 then you must specify the certificate name that you install in a previous step (using Github secret for instance)
-- `secret-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
-- `secret-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
+- `sign-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
+- `sign-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
+- `entitlements-file`: if do not want to use default one provide a path for a custom entitlements file
 
 ```yaml
     - name: Build
