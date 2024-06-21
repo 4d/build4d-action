@@ -190,7 +190,12 @@ Function build()->$status : Object
 	var $temp4DZs : Collection
 	$temp4DZs:=New collection:C1472
 	
-	$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
+	If ($config.file=Null:C1517)
+		$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
+		If (Not:C34($config.file.exists))
+			$config.file:=$config.workingDirectory.file($config.path)
+		End if 
+	End if 
 	
 	// adding potential component from folder Components
 	If ($config.options.components=Null:C1517)
@@ -241,6 +246,11 @@ Function build()->$status : Object
 	
 	If ($config.file=Null:C1517)  // check it or the current base will be compiled instead
 		Storage:C1525.github.error("‼️ Build failure: cannot get file to compile")
+		$status.success:=False:C215
+		return $status
+	End if 
+	If (Not:C34($config.file.exists))  // check it or the current base will be compiled instead
+		Storage:C1525.github.error("‼️ Build failure: file to compile do not exists")
 		$status.success:=False:C215
 		return $status
 	End if 
