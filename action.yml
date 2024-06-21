@@ -50,6 +50,10 @@ inputs:
     description: "List of file paths to sign too relative to base folder"
     required: false
     default: ""
+  entitlements-file:   
+    description: "Path of entitlement files to sign (if not defined use default one)"
+    required: false
+    default: ""
 
   product-line:
     description: 'tool4d product line'
@@ -99,6 +103,7 @@ runs:
           "outputDirectory":"${{ inputs.output-directory }}",
           "signCertificate":"${{ inputs.sign-certificate }}",
           "signFiles":"${{ inputs.sign-files }}",
+          "entitlementsFile":"${{ inputs.entitlements-file }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

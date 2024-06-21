@@ -563,7 +563,28 @@ Function sign() : Object
 	End if 
 	
 	var $entitlementsFile : 4D:C1709.File
-	$entitlementsFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/4D.entitlements")
+	
+	If ((Value type:C1509($config.entitlementsFile)=Is text:K8:3) && (Length:C16($config.entitlementsFile)>0))
+		
+		$entitlementsFile:=File:C1566(Replace string:C233($config.entitlementsFile; "\\"; "/"))
+		
+		If (Not:C34($entitlementsFile.exists))
+			Storage:C1525.github.debug("absolute not exists:"+$entitlementsFile.path)
+			$entitlementsFile:=$config.workingDirectory.file(Replace string:C233($config.entitlementsFile; "\\"; "/"))
+			Storage:C1525.github.debug("try with relative to working dir:"+$entitlementsFile.path)
+		End if 
+		
+		If (Not:C34($entitlementsFile.exists))
+			Storage:C1525.github.error("defined entitlements file seems to not exists")
+			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
+		End if 
+	Else 
+		
+		$entitlementsFile:=Folder:C1567(fk resources folder:K87:11).folder("default.entitlements")
+		
+	End if 
+	
+	
 	If (Not:C34($entitlementsFile.exists))
 		Storage:C1525.github.error("No entitlements files")
 		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
