@@ -4,6 +4,7 @@ Class constructor($config : Object)
 Function _setup($config : Object)
 	This:C1470.config:=$config
 	If (This:C1470.config=Null:C1517)
+		Storage:C1525.github.debug("no config")
 		This:C1470.config:=New object:C1471
 	End if 
 	
@@ -61,14 +62,18 @@ Function _setup($config : Object)
 			
 			$config.path:=String:C10($config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
 			
+			Storage:C1525.github.debug("find project file "+$config.path)
+			
 		End if 
 		
 	Else 
 		
+		Storage:C1525.github.debug("config path "+$config.path)
 		$config.file:=File:C1566($config.path)
 		
 		If (($config.file=Null:C1517) || Not:C34($config.file.exists))
 			
+			Storage:C1525.github.debug("project file not exists as full path, look for one in working folder")
 			$config.relative:=$config.path
 			
 			// ensure not a mixed path with \ and / due to window full path + posix relative path of project ie be tolerant
@@ -91,6 +96,7 @@ Function _setup($config : Object)
 			$config.file:=$config.workingDirectoryFolder.file($config.path)
 			If ($config.file#Null:C1517)
 				$config.path:=$config.file.path
+				Storage:C1525.github.debug("config path with working directory "+$config.path)
 			End if 
 			$config.file:=File:C1566($config.file.platformPath; fk platform path:K87:2)  // unbox if needed
 			
