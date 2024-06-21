@@ -11,7 +11,7 @@ inputs:
     required: false
 
   targets:
-    description: "Possible values: \"x86_64_generic\", \"arm64_macOS_lib\" if macOS"
+    description: "If not defined, only a check syntax is done. Possible values: \"x86_64_generic\", \"arm64_macOS_lib\" if macOS. (some shortcut all, current, available)"
     required: false
     default: ""
   type-inference:

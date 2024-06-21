@@ -335,6 +335,8 @@ Function _fCheckTargetName($object : Object)
 			$object.result:="arm64_macOS_lib"
 		: ($object.value="all")
 			$object.result:=New collection:C1472("arm64_macOS_lib"; "x86_64_generic")
+		: ($object.value="available")
+			$object.result:=Is macOS:C1572 ? New collection:C1472("arm64_macOS_lib"; "x86_64_generic") : New collection:C1472("x86_64_generic")
 		Else 
 			Storage:C1525.github.warning("Unknown target "+String:C10($object.value))
 			$object.result:=Null:C1517
