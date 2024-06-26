@@ -431,7 +431,8 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	End if 
 	$baseFolder:=$config.file.parent.parent
 	If ($baseFolder=Null:C1517)
-		Storage:C1525.github.debug("No base folder for path "+$config.file.path)
+		Storage:C1525.github.debug("No base folder for path "+$config.file.path+". File exists?"+String:C10($config.file.exists))
+		
 		return $temp4DZs
 	End if 
 	$componentsFolders:=New collection:C1472($baseFolder.folder("Components"); $baseFolder.folder("Build/Components"))
@@ -485,7 +486,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 				This:C1470._checkCompile($dependency)  // seems needed even for check syntax
 				
 				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file(This:C1470._not4DName($dependency.name)+".4DZ")
-				$status:=ZIP Create archive:C1640($dependency; $dependencyFile; ZIP Without enclosing folder:K91:7)
+				$status:=ZIP Create archive:C1640($dependency.folder("Project"); $dependencyFile)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
 				$config.options.components.push($dependencyFile)
 				$temp4DZs.push($dependencyFile)
@@ -562,19 +563,92 @@ Function pack() : Object
 		return $status
 	End if 
 	
+	If ($config.cleanSources=Null:C1517)
+		$config.cleanSources:=True:C214
+	End if 
+	
 	
 	var $packFile : 4D:C1709.File
 	$packFile:=$config.file.parent.parent.file($config.file.name+".4DZ")
 	
 	var $projectFolder : 4D:C1709.Folder
 	$projectFolder:=$config.file.parent
-	$status:=ZIP Create archive:C1640($projectFolder; $packFile; ZIP Without enclosing folder:K91:7)
+	
+	If ($config.cleanSources)
+		This:C1470._cleanProjectSources($projectFolder)
+	End if 
+	
+	$status:=ZIP Create archive:C1640($projectFolder; $packFile)
 	
 	If ($status.success)
 		$projectFolder.delete(fk recursive:K87:7)
 	End if 
 	
 	return $status
+	
+	
+Function _cleanProjectSources($projectFolder : 4D:C1709.Folder)
+	
+	var $folder : 4D:C1709.Folder
+	$folder:=$projectFolder.folder("Trash")
+	
+	If ($folder.exists)
+		
+		Storage:C1525.github.debug("Removing trash folder")
+		$folder.delete(Delete with contents:K24:24)
+		
+	End if 
+	
+	var $sourcesFolder : 4D:C1709.Folder
+	$sourcesFolder:=$projectFolder.folder("Sources")
+	
+	
+	If ($sourcesFolder.file("folders.json").exists)
+		
+		Storage:C1525.github.debug("Removing private file")
+		$sourcesFolder.file("folders.json").delete()
+		
+	End if 
+	
+	Storage:C1525.github.debug("Removing method source files")
+	var $file : 4D:C1709.File
+	For each ($file; $sourcesFolder.files(fk recursive:K87:7).query("extension=.4dm"))
+		
+		$file.delete()
+		
+	End for each 
+	
+	// Delete 'Methods', 'Triggers', 'DatabaseMethods', 'Classes' folders if empty
+	var $folderName : Text
+	For each ($folderName; New collection:C1472("Classes"; "Methods"; "Triggers"; "DatabaseMethods"))
+		
+		$folder:=$sourcesFolder.folder($folderName)
+		
+		If ($folder.exists)
+			
+			If ($folder.files().length=0)\
+				 & ($folder.folders().length=0)
+				
+				$folder.delete()
+				
+			End if 
+		End if 
+	End for each 
+	
+	// Delete form objects folders
+	For each ($folder; $sourcesFolder.folder("Forms").folders(fk recursive:K87:7).query("fullName=ObjectMethods"))
+		
+		If ($folder.files().length=0)\
+			 & ($folder.folders().length=0)
+			
+			$folder.delete()
+			
+		End if 
+		
+	End for each 
+	
+	
+	
 	
 	// MARK:- sign
 	
@@ -617,7 +691,7 @@ Function sign() : Object
 		End if 
 	Else 
 		
-		$entitlementsFile:=Folder:C1567(fk resources folder:K87:11).folder("default.entitlements")
+		$entitlementsFile:=Folder:C1567(fk resources folder:K87:11).file("default.entitlements")
 		
 	End if 
 	
@@ -647,10 +721,10 @@ Function sign() : Object
 	var $worker : 4D:C1709.SystemWorker
 	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 	
-	If ($worker.response#Null:C1517)
+	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
 		Storage:C1525.github.info($worker.response)
 	End if 
-	If ($worker.responseError#Null:C1517)
+	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
 		Storage:C1525.github.warning($worker.responseError)
 	End if 
 	
@@ -658,7 +732,7 @@ Function sign() : Object
 	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
 	Storage:C1525.github.debug(JSON Stringify:C1217($status))
 	
-	If (($status.success) && Value type:C1509($config.signFiles)=Is collection:K8:32)
+	If (($status.success) && ($config.signFiles#Null:C1517) && (Value type:C1509($config.signFiles)=Is collection:K8:32))
 		
 		var $signFile : 4D:C1709.File
 		var $signFilePath : Text
@@ -670,10 +744,10 @@ Function sign() : Object
 			$cmd:=$cmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
 			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 			
-			If ($worker.response#Null:C1517)
+			If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
 				Storage:C1525.github.info($worker.response)
 			End if 
-			If ($worker.responseError#Null:C1517)
+			If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
 				Storage:C1525.github.warning($worker.responseError)
 			End if 
 			
@@ -720,10 +794,10 @@ Function archive() : Object
 		var $worker : 4D:C1709.SystemWorker
 		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 		
-		If ($worker.response#Null:C1517)
+		If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
 			Storage:C1525.github.info($worker.response)
 		End if 
-		If ($worker.responseError#Null:C1517)
+		If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
 			Storage:C1525.github.warning($worker.responseError)
 		End if 
 		
@@ -746,23 +820,78 @@ Function archive() : Object
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
 	
-	//var $file : 4D.File
+	var $config : Object
+	$config:=This:C1470.config
+	
+	var $file : 4D:C1709.File
 	var $folder : 4D:C1709.Folder
 	
-	// invisible files
-/*For each ($file; $base.files().query("fullName=.@"))
-$file.delete()
-End for each 
-For each ($folder; $base.folders().query("fullName=.@"))
-$folder.delete(Delete with contents)
-End for each */
+	If ($config.cleanInvisible=Null:C1517)
+		$config.cleanInvisible:=True:C214
+	End if 
+	If ($config.cleanData=Null:C1517)
+		$config.cleanData:=True:C214
+	End if 
 	
-	// user pref
-	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
+	// invisible files
+	If ($config.cleanInvisible)
+		For each ($file; $base.files().query("fullName=.@"))
+			$file.delete()
+		End for each 
+		
+		For each ($folder; $base.folders().query("fullName=.@"))
+			$folder.delete(Delete with contents:K24:24)
+		End for each 
+	End if 
+	
+	
+	// Delete the Logs folder
+	$folder:=$base.folder("Logs")
+	
+	If ($folder.exists)
+		
+		Storage:C1525.github.debug("Removing logs folder")
 		$folder.delete(Delete with contents:K24:24)
+		
+	End if 
+	
+	// Delete the Preferences folder
+	$folder:=$base.folder("Preferences")
+	
+	If ($folder.exists)
+		
+		Storage:C1525.github.debug("Removing Preferences folder")
+		$folder.delete(Delete with contents:K24:24)
+		
+	End if 
+	
+	// Delete the Settings folder
+	$folder:=$base.folder("Settings")
+	
+	If ($folder.exists)
+		
+		Storage:C1525.github.debug("Removing Settings folder")
+		$folder.delete(Delete with contents:K24:24)
+		
+	End if 
+	
+	// Delete the user pref
+	For each ($folder; $base.folders().query("fullName=userPreferences.@"))
+		
+		Storage:C1525.github.debug("Removing preferences folder "+$folder.path)
+		$folder.delete(Delete with contents:K24:24)
+		
 	End for each 
 	
-	// Logs folder?
+	// Delete some other unused files 
+	If ($config.cleanData)
+		For each ($file; $folder.files().query("extension=.4DD OR extension=.Match"))
+			
+			Storage:C1525.github.debug("Removing data file "+$file.path)
+			$file.delete()
+			
+		End for each 
+	End if 
 	
 	
 	// MARK:- run
@@ -796,7 +925,7 @@ Function run() : Object
 			
 			Storage:C1525.github.debug("...will execute actions: "+This:C1470.config.actions.join(","))
 			
-			This:C1470._sortActions(This:C1470.config.actions)
+			This:C1470.config.actions:=This:C1470._sortActions(This:C1470.config.actions)
 			
 			var $action : Text
 			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
@@ -814,19 +943,18 @@ Function run() : Object
 	
 	return $status
 	
-Function _sortActions($actions : Collection)
-	// TODO: do better sort with some weight , expected order
+Function _sortActions($actions : Collection) : Collection
 	
-	// for the moment put at the end archive
-	var $archiveIndex : Integer
-	$archiveIndex:=$actions.indexOf("archive")
-	If ($archiveIndex>=0)
+	var $sortedAction : Collection
+	$sortedAction:=New collection:C1472()
+	
+	var $action : Text
+	For each ($action; New collection:C1472("clean"; "build"; "sign"; "pack"; "archive"))
 		
-		If ($archiveIndex#($actions.length-1))
-			$actions.remove($archiveIndex)
-			$actions.push("archive")
+		If ($actions.includes($action))
+			$sortedAction.push($action)
 		End if 
 		
-	End if 
+	End for each 
 	
-	
+	return $sortedAction
