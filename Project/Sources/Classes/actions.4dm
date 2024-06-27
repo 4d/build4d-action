@@ -8,40 +8,40 @@ Function _setup($config : Object)
 		This:C1470.config:=New object:C1471
 	End if 
 	
-	If (Length:C16(String:C10($config.errorFlag))>0)
+	If (Length:C16(String:C10(This:C1470.config.errorFlag))>0)
 		Use (Storage:C1525.exit)
-			Storage:C1525.exit.errorFlag:=String:C10($config.errorFlag)
-			Storage:C1525.github.debug("error flag defined to "+String:C10($config.errorFlag))
+			Storage:C1525.exit.errorFlag:=String:C10(This:C1470.config.errorFlag)
+			Storage:C1525.github.debug("error flag defined to "+String:C10(This:C1470.config.errorFlag))
 		End use 
 	End if 
 	
 	Case of 
-		: ($config.debug#Null:C1517)
-			$config.debug:=isTruthly($config.debug)
+		: (This:C1470.config.debug#Null:C1517)
+			This:C1470.config.debug:=isTruthly(This:C1470.config.debug)
 		Else 
-			$config.debug:=isDev
+			This:C1470.config.debug:=isDev
 	End case 
 	Use (Storage:C1525.github)
-		Storage:C1525.github.isDebug:=Bool:C1537($config.debug)
+		Storage:C1525.github.isDebug:=Bool:C1537(This:C1470.config.debug)
 	End use 
 	
-	$config.ignoreWarnings:=isTruthly($config.ignoreWarnings)
-	$config.failOnWarning:=isTruthly($config.failOnWarning)
+	This:C1470.config.ignoreWarnings:=isTruthly(This:C1470.config.ignoreWarnings)
+	This:C1470.config.failOnWarning:=isTruthly(This:C1470.config.failOnWarning)
 	
 	
 	// check "workingDirectory"
-	If (Length:C16(String:C10($config.workingDirectory))>0)
+	If (Length:C16(String:C10(This:C1470.config.workingDirectory))>0)
 		
-		Storage:C1525.github.debug("workingDirectory="+String:C10($config.workingDirectory))
+		Storage:C1525.github.debug("workingDirectory="+String:C10(This:C1470.config.workingDirectory))
 		
 	Else 
 		// CLEAN: see env var ? any means using 4D?
 		
 		If (isDev)  // this base to test
 			If (Is Windows:C1573)
-				$config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
+				This:C1470.config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
 			Else 
-				$config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
+				This:C1470.config.workingDirectory:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).path
 			End if 
 		End if 
 		
@@ -49,56 +49,59 @@ Function _setup($config : Object)
 	
 	
 	// check "path"
-	If (Length:C16(String:C10($config.path))=0)
+	If (Length:C16(String:C10(This:C1470.config.path))=0)
 		
 		// find first file into 
-		If ($config.workingDirectory#Null:C1517)
+		If (This:C1470.config.workingDirectory#Null:C1517)
 			
 			If (Is Windows:C1573)
-				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory; fk platform path:K87:2)
+				This:C1470.config.workingDirectoryFolder:=Folder:C1567(This:C1470.config.workingDirectory; fk platform path:K87:2)
 			Else 
-				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory)
+				This:C1470.config.workingDirectoryFolder:=Folder:C1567(This:C1470.config.workingDirectory)
 			End if 
 			
-			$config.path:=String:C10($config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
+			This:C1470.config.path:=String:C10(This:C1470.config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
 			
-			Storage:C1525.github.debug("find project file "+$config.path)
-			
+			Storage:C1525.github.debug("find project file "+This:C1470.config.path)
+			This:C1470.config.file:=File:C1566(This:C1470.config.path)
+			If (This:C1470.config.file#Null:C1517)
+				This:C1470.config.file:=File:C1566(This:C1470.config.file.platformPath; fk platform path:K87:2)  // unbox if needed
+			End if 
 		End if 
 		
 	Else 
 		
-		Storage:C1525.github.debug("config path "+$config.path)
-		$config.file:=File:C1566($config.path)
+		Storage:C1525.github.debug("config path "+This:C1470.config.path)
+		This:C1470.config.file:=File:C1566(This:C1470.config.path)
 		
-		If (($config.file=Null:C1517) || Not:C34($config.file.exists))
+		If ((This:C1470.config.file=Null:C1517) || Not:C34(This:C1470.config.file.exists) || (This:C1470._baseFolder()=Null:C1517))
 			
 			Storage:C1525.github.debug("project file not exists as full path, look for one in working folder")
-			$config.relative:=$config.path
+			This:C1470.config.relative:=This:C1470.config.path
 			
 			// ensure not a mixed path with \ and / due to window full path + posix relative path of project ie be tolerant
 			If (Is Windows:C1573)
 				
-				$config.relative:=Replace string:C233($config.workingDirectory; $config.path; "")
-				$config.relative:=Replace string:C233($config.relative; "/"; "\\")
-				If (Position:C15("\\"; $config.relative)=1)
-					$config.relative:=Delete string:C232($config.relative; 1; 1)
+				This:C1470.config.relative:=Replace string:C233(This:C1470.config.workingDirectory; This:C1470.config.path; "")
+				This:C1470.config.relative:=Replace string:C233(This:C1470.config.relative; "/"; "\\")
+				If (Position:C15("\\"; This:C1470.config.relative)=1)
+					This:C1470.config.relative:=Delete string:C232(This:C1470.config.relative; 1; 1)
 				End if 
 				
 			End if 
 			
 			If (Is Windows:C1573)
-				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory; fk platform path:K87:2)
+				This:C1470.config.workingDirectoryFolder:=Folder:C1567(This:C1470.config.workingDirectory; fk platform path:K87:2)
 			Else 
-				$config.workingDirectoryFolder:=Folder:C1567($config.workingDirectory)
+				This:C1470.config.workingDirectoryFolder:=Folder:C1567(This:C1470.config.workingDirectory)
 			End if 
 			
-			$config.file:=$config.workingDirectoryFolder.file($config.path)
-			If ($config.file#Null:C1517)
-				$config.path:=$config.file.path
-				Storage:C1525.github.debug("config path with working directory "+$config.path)
+			This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
+			If (This:C1470.config.file#Null:C1517)
+				This:C1470.config.path:=This:C1470.config.file.path
+				Storage:C1525.github.debug("config path with working directory "+This:C1470.config.path)
 			End if 
-			$config.file:=File:C1566($config.file.platformPath; fk platform path:K87:2)  // unbox if needed
+			This:C1470.config.file:=File:C1566(This:C1470.config.file.platformPath; fk platform path:K87:2)  // unbox if needed
 			
 		End if 
 		
@@ -106,119 +109,109 @@ Function _setup($config : Object)
 	
 	
 	// check actions
-	If ((Value type:C1509($config.actions)=Is text:K8:3) && (Length:C16($config.actions)>0))
-		If ($config.actions[[1]]="[")
-			$config.actions:=JSON Parse:C1218($config.actions)
+	If ((Value type:C1509(This:C1470.config.actions)=Is text:K8:3) && (Length:C16(This:C1470.config.actions)>0))
+		If (This:C1470.config.actions[[1]]="[")
+			This:C1470.config.actions:=JSON Parse:C1218(This:C1470.config.actions)
 		Else 
-			$config.actions:=Split string:C1554(String:C10($config.actions); ",")
+			This:C1470.config.actions:=Split string:C1554(String:C10(This:C1470.config.actions); ",")
 		End if 
 	End if 
 	
-	If (Value type:C1509($config.actions)#Is collection:K8:32)
-		$config.actions:=New collection:C1472
+	If (Value type:C1509(This:C1470.config.actions)#Is collection:K8:32)
+		This:C1470.config.actions:=New collection:C1472
 	End if 
 	
-	If ($config.actions.length=0)
-		$config.actions.push("build")
+	If (This:C1470.config.actions.length=0)
+		This:C1470.config.actions.push("build")
 	End if 
 	
-	If (($config.outputDirectory#Null:C1517) && (Value type:C1509($config.outputDirectory)=Is text:K8:3) && (Length:C16($config.outputDirectory)=0))
-		$config.outputDirectory:=Null:C1517
+	If ((This:C1470.config.outputDirectory#Null:C1517) && (Value type:C1509(This:C1470.config.outputDirectory)=Is text:K8:3) && (Length:C16(This:C1470.config.outputDirectory)=0))
+		This:C1470.config.outputDirectory:=Null:C1517
 	End if 
 	
-	If ($config.actions.includes("pack") && ($config.outputDirectory=Null:C1517))
+	If (This:C1470.config.actions.includes("pack") && (This:C1470.config.outputDirectory=Null:C1517))
 		
 		// if pack action, we need an output dir
-		$config.outputDirectory:=File:C1566($config.path).parent.parent.folder("build")  // .build?
-		Storage:C1525.github.debug("Set default output directory to "+$config.outputDirectory.path)
+		This:C1470.config.outputDirectory:=This:C1470._baseFolder().folder("build")  // .build?
+		Storage:C1525.github.debug("Set default output directory to "+This:C1470.config.outputDirectory.path)
 		
 	End if 
 	
-	If ($config.actions.includes("pack") && Not:C34($config.actions.includes("build")))
+	If (This:C1470.config.actions.includes("pack") && Not:C34(This:C1470.config.actions.includes("build")))
 		
-		$config.actions.unshift("build")
+		This:C1470.config.actions.unshift("build")
 		Storage:C1525.github.debug("Action build added, because pack action defined")
 		
 	End if 
 	
 	
-	If ($config.outputDirectory#Null:C1517)
+	If (This:C1470.config.outputDirectory#Null:C1517)
 		
-		If (Value type:C1509($config.outputDirectory)=Is text:K8:3)
+		If (Value type:C1509(This:C1470.config.outputDirectory)=Is text:K8:3)
 			If (Is Windows:C1573)
-				$config.outputDirectory:=Replace string:C233($config.outputDirectory; "\\"; "/")
+				This:C1470.config.outputDirectory:=Replace string:C233(This:C1470.config.outputDirectory; "\\"; "/")
 			End if 
-			$config.outputDirectory:=Folder:C1567($config.outputDirectory)
+			This:C1470.config.outputDirectory:=Folder:C1567(This:C1470.config.outputDirectory)
 		End if 
 		
-		ASSERT:C1129(Value type:C1509($config.outputDirectory)=Is object:K8:27)  // even check folders?
+		ASSERT:C1129(Value type:C1509(This:C1470.config.outputDirectory)=Is object:K8:27)  // even check folders?
 		
-		If (Not:C34($config.outputDirectory.exists))
-			$config.outputDirectory.create()  // TODO: if not log error?
+		If (Not:C34(This:C1470.config.outputDirectory.exists))
+			This:C1470.config.outputDirectory.create()  // TODO: if not log error?
 		End if 
 		
-		$config.outputDirectory:=Folder:C1567($config.outputDirectory.platformPath; fk platform path:K87:2)  // unbox
+		This:C1470.config.outputDirectory:=Folder:C1567(This:C1470.config.outputDirectory.platformPath; fk platform path:K87:2)  // unbox
 		
 	End if 
 	
-	If (Not:C34($config.actions.includes("sign")) && ($config.signCertificate#Null:C1517) && (Length:C16(String:C10($config.signCertificate))>0))
-		$config.actions.push("sign")
+	If (Not:C34(This:C1470.config.actions.includes("sign")) && (This:C1470.config.signCertificate#Null:C1517) && (Length:C16(String:C10(This:C1470.config.signCertificate))>0))
+		This:C1470.config.actions.push("sign")
 		Storage:C1525.github.debug("Action sign added, because sign certificate defined")
 	End if 
 	
-	If ((Value type:C1509($config.signFiles)=Is text:K8:3) && (Length:C16($config.signFiles)>0))
-		If ($config.signFiles[[1]]="[")
-			$config.signFiles:=JSON Parse:C1218($config.signFiles)
+	If ((Value type:C1509(This:C1470.config.signFiles)=Is text:K8:3) && (Length:C16(This:C1470.config.signFiles)>0))
+		If (This:C1470.config.signFiles[[1]]="[")
+			This:C1470.config.signFiles:=JSON Parse:C1218(This:C1470.config.signFiles)
 		Else 
-			$config.signFiles:=Split string:C1554(String:C10($config.signFiles); ",")
+			This:C1470.config.signFiles:=Split string:C1554(String:C10(This:C1470.config.signFiles); ",")
 		End if 
 	End if 
 	
 	
 	// MARK:- build
 Function build()->$status : Object
-	var $config : Object
-	$config:=This:C1470.config
 	
 	// get compilation options
 	Case of 
-		: ((Value type:C1509($config.options)=Is text:K8:3) && \
-			((Length:C16($config.options)>1) && \
-			(Position:C15("{"; $config.options)=1)))
-			$config.options:=JSON Parse:C1218($config.options)
-			$config.options:=This:C1470._checkCompilationOptions($config.options)
-		: (Value type:C1509($config.options)=Is object:K8:27)
-			$config.options:=This:C1470._checkCompilationOptions($config.options)
+		: ((Value type:C1509(This:C1470.config.options)=Is text:K8:3) && \
+			((Length:C16(This:C1470.config.options)>1) && \
+			(Position:C15("{"; This:C1470.config.options)=1)))
+			This:C1470.config.options:=JSON Parse:C1218(This:C1470.config.options)
+			This:C1470.config.options:=This:C1470._checkCompilationOptions(This:C1470.config.options)
+		: (Value type:C1509(This:C1470.config.options)=Is object:K8:27)
+			This:C1470.config.options:=This:C1470._checkCompilationOptions(This:C1470.config.options)
 		Else 
-			$config.options:=This:C1470._checkCompilationOptions(New object:C1471)
+			This:C1470.config.options:=This:C1470._checkCompilationOptions(New object:C1471)
 	End case 
 	
 	var $dependencyFile : 4D:C1709.File
 	var $temp4DZs : Collection
 	$temp4DZs:=New collection:C1472
 	
-	If ($config.file=Null:C1517)
-		$config.file:=File:C1566($config.path)  // used to get parents directory (for instance to get components)
-		If (Not:C34($config.file.exists))
-			$config.file:=$config.workingDirectory.file($config.path)
-		End if 
-	End if 
-	If ($config.file#Null:C1517)
-		$config.file:=File:C1566($config.file.platformPath; fk platform path:K87:2)  // unbox if needed
-	End if 
+	
 	// adding potential component from folder Components
-	If ($config.options.components=Null:C1517)
-		$temp4DZs:=This:C1470._fillComponents($config)
+	If (This:C1470.config.options.components=Null:C1517)
+		$temp4DZs:=This:C1470._fillComponents()
 	End if 
 	
-	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217($config.options))
+	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217(This:C1470.config.options))
 	
-	If ($config.outputDirectory#Null:C1517)
+	If (This:C1470.config.outputDirectory#Null:C1517)
 		
 		var $baseFolder; $outputDir; $tmpFolder : 4D:C1709.Folder
 		var $tmpFile : 4D:C1709.File
-		$baseFolder:=$config.file.parent.parent
-		$outputDir:=$config.outputDirectory.folder($config.file.name+".4dbase")
+		$baseFolder:=This:C1470._baseFolder()
+		$outputDir:=This:C1470.config.outputDirectory.folder(This:C1470.config.file.name+".4dbase")
 		If ($outputDir.exists)
 			If (Not:C34($outputDir.delete(fk recursive:K87:7)))
 				
@@ -249,22 +242,22 @@ Function build()->$status : Object
 			End if 
 		End for each 
 		
-		$config.file:=$outputDir.folder("Project").file($config.file.fullName)
+		This:C1470.config.file:=$outputDir.folder("Project").file(This:C1470.config.file.fullName)
 		
 	End if 
 	
-	If ($config.file=Null:C1517)  // check it or the current base will be compiled instead
+	If (This:C1470.config.file=Null:C1517)  // check it or the current base will be compiled instead
 		Storage:C1525.github.error("‼️ Build failure: cannot get file to compile")
 		$status.success:=False:C215
 		return $status
 	End if 
-	If (Not:C34($config.file.exists))  // check it or the current base will be compiled instead
+	If (Not:C34(This:C1470.config.file.exists))  // check it or the current base will be compiled instead
 		Storage:C1525.github.error("‼️ Build failure: file to compile do not exists")
 		$status.success:=False:C215
 		return $status
 	End if 
 	
-	$status:=Compile project:C1760($config.file; $config.options)
+	$status:=Compile project:C1760(This:C1470.config.file; This:C1470.config.options)
 	
 	For each ($dependencyFile; $temp4DZs)
 		$dependencyFile.delete()
@@ -276,12 +269,12 @@ Function build()->$status : Object
 			Storage:C1525.github.error("‼️ Build failure")
 			Storage:C1525.github.addToSummary("## ‼️ Build failure")
 			
-		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Bool:C1537($config.failOnWarning))
+		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Bool:C1537(This:C1470.config.failOnWarning))
 			Storage:C1525.github.error("‼️ Build failure due to warnings")
 			Storage:C1525.github.addToSummary("## ‼️ Build failure due to warnings")
 			$status.success:=False:C215
 			
-		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Not:C34(Bool:C1537($config.ignoreWarnings)))
+		: (($status.errors#Null:C1517) && ($status.errors.length>0) && Not:C34(Bool:C1537(This:C1470.config.ignoreWarnings)))
 			Storage:C1525.github.warning("⚠️ Build success with warnings")
 			Storage:C1525.github.addToSummary("## ⚠️ Build success with warnings")
 			
@@ -375,13 +368,10 @@ Function _fCheckTargetName($object : Object)
 	//   - line: Integer
 	//   - lineInFile: Integer
 Function _reportCompilationError($error : Object)
-	var $config : Object
-	$config:=This:C1470.config
-	
 	var $cmd : Text
 	$cmd:=Bool:C1537($error.isError) ? "error" : "warning"
 	
-	If (Bool:C1537($config.ignoreWarnings) && ($cmd="warning"))
+	If (Bool:C1537(This:C1470.config.ignoreWarnings) && ($cmd="warning"))
 		return 
 	End if 
 	
@@ -390,14 +380,14 @@ Function _reportCompilationError($error : Object)
 	//$lineContent:=Split string($error.code.file.getText("UTF-8"; Document with LF); "\n")[$error.lineInFile-1]
 	If ($error.code#Null:C1517)
 		var $relativePath : Text
-		$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; $config.workingDirectory; "")
+		$relativePath:=Replace string:C233(File:C1566($error.code.file.platformPath; fk platform path:K87:2).path; This:C1470.config.workingDirectory; "")
 		$metadata:=New object:C1471("file"; String:C10($relativePath); "line"; String:C10($error.lineInFile))
 	End if 
 	
 	// github action cmd
 	Storage:C1525.github.cmd($cmd; String:C10($error.message); Error message:K38:3; $metadata)
 	
-	If (Bool:C1537($error.isError) || Bool:C1537($config.failOnWarning))
+	If (Bool:C1537($error.isError) || Bool:C1537(This:C1470.config.failOnWarning))
 		Storage:C1525.exit.setErrorStatus("compilationError")
 	End if 
 	
@@ -420,18 +410,18 @@ Function _getDependenciesFor($folder : 4D:C1709.Folder)->$dependencies : Collect
 			
 	End case 
 	
-Function _fillComponents($config : Object)->$temp4DZs : Collection
+Function _fillComponents()->$temp4DZs : Collection
 	var $baseFolder : 4D:C1709.Folder
 	var $componentsFolder : 4D:C1709.Folder
 	var $componentsFolders : Collection
 	$temp4DZs:=New collection:C1472
-	If ($config.file=Null:C1517)
+	If (This:C1470.config.file=Null:C1517)
 		Storage:C1525.github.debug("No file passed to fill components")
 		return $temp4DZs
 	End if 
-	$baseFolder:=$config.file.parent.parent
+	$baseFolder:=This:C1470._baseFolder()
 	If ($baseFolder=Null:C1517)
-		Storage:C1525.github.debug("No base folder for path "+$config.file.path+". File exists?"+String:C10($config.file.exists))
+		Storage:C1525.github.debug("No base folder for path "+This:C1470.config.file.path+". File exists?"+String:C10(This:C1470.config.file.exists))
 		
 		return $temp4DZs
 	End if 
@@ -450,15 +440,15 @@ Function _fillComponents($config : Object)->$temp4DZs : Collection
 	End if 
 	
 	Storage:C1525.github.info("...adding dependencies")
-	$config.options.components:=New collection:C1472
+	This:C1470.config.options.components:=New collection:C1472
 	
 	For each ($componentsFolder; $componentsFolders)
 		This:C1470._addDepFromFolder($componentsFolder; $temp4DZs)
 	End for each 
 	
 	//check if all dep fullfilled to warn if not
-	If (($dependencies.length>0) && ($dependencies.length#$config.options.components.length))
-		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10($config.options.components.length))
+	If (($dependencies.length>0) && ($dependencies.length#This:C1470.config.options.components.length))
+		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10(This:C1470.config.options.components.length))
 	End if 
 	
 Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Collection)
@@ -469,8 +459,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 	var $dependency : 4D:C1709.Folder
 	var $dependencyFile : 4D:C1709.File
 	var $status : Object
-	var $config : Object
-	$config:=This:C1470.config
+	
 	
 	// MARK: add 4dbase
 	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
@@ -479,7 +468,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 			: ($dependency.file($dependency.name+".4DZ").exists)  // archive exists
 				
 				Storage:C1525.github.info("Dependency archive found "+$dependency.name)
-				$config.options.components.push($dependency.file($dependency.name+".4DZ"))
+				This:C1470.config.options.components.push($dependency.file($dependency.name+".4DZ"))
 				
 			: ($dependency.folder("Project").exists)  // maybe compiled or just have source but no archive yet
 				
@@ -488,7 +477,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file(This:C1470._not4DName($dependency.name)+".4DZ")
 				$status:=ZIP Create archive:C1640($dependency.folder("Project"); $dependencyFile)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
-				$config.options.components.push($dependencyFile)
+				This:C1470.config.options.components.push($dependencyFile)
 				$temp4DZs.push($dependencyFile)
 				
 		End case 
@@ -497,7 +486,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 	
 	// MARK: add 4dz
 	For each ($dependencyFile; $componentsFolder.files().filter(Formula:C1597($1.value.extension=".4DZ")))
-		$config.options.components.push($dependencyFile)
+		This:C1470.config.options.components.push($dependencyFile)
 	End for each 
 	
 Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
@@ -553,28 +542,25 @@ Function pack() : Object
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
-	var $config : Object
-	$config:=This:C1470.config
-	
-	If ($config.outputDirectory=Null:C1517)
+	If (This:C1470.config.outputDirectory=Null:C1517)
 		$status.success:=False:C215
 		Storage:C1525.github.error("Must have defined an output directory")
 		$status.errors:=New collection:C1472("Must have defined an output directory")
 		return $status
 	End if 
 	
-	If ($config.cleanSources=Null:C1517)
-		$config.cleanSources:=True:C214
+	If (This:C1470.config.cleanSources=Null:C1517)
+		This:C1470.config.cleanSources:=True:C214
 	End if 
 	
 	
 	var $packFile : 4D:C1709.File
-	$packFile:=$config.file.parent.parent.file($config.file.name+".4DZ")
+	$packFile:=This:C1470._baseFolder().file(This:C1470.config.file.name+".4DZ")
 	
 	var $projectFolder : 4D:C1709.Folder
-	$projectFolder:=$config.file.parent
+	$projectFolder:=This:C1470.config.file.parent
 	
-	If ($config.cleanSources)
+	If (This:C1470.config.cleanSources)
 		This:C1470._cleanProjectSources($projectFolder)
 	End if 
 	
@@ -652,13 +638,19 @@ Function _cleanProjectSources($projectFolder : 4D:C1709.Folder)
 	
 	// MARK:- sign
 	
+Function _baseFolder() : 4D:C1709.Folder
+	If (This:C1470.config.file=Null:C1517)
+		return Null:C1517
+	End if 
+	If (This:C1470.config.file.parent=Null:C1517)
+		return Null:C1517
+	End if 
+	return This:C1470.config.file.parent.parent
+	
 Function sign() : Object
 	
-	var $config : Object
-	$config:=This:C1470.config
-	
 	var $baseFolder : 4D:C1709.Folder
-	$baseFolder:=$config.file.parent.parent
+	$baseFolder:=This:C1470._baseFolder()
 	
 	If (Not:C34(Is macOS:C1572))
 		Storage:C1525.github.warning("Signature ignored on this OS")
@@ -675,13 +667,13 @@ Function sign() : Object
 	
 	var $entitlementsFile : 4D:C1709.File
 	
-	If ((Value type:C1509($config.entitlementsFile)=Is text:K8:3) && (Length:C16($config.entitlementsFile)>0))
+	If ((Value type:C1509(This:C1470.config.entitlementsFile)=Is text:K8:3) && (Length:C16(This:C1470.config.entitlementsFile)>0))
 		
-		$entitlementsFile:=File:C1566(Replace string:C233($config.entitlementsFile; "\\"; "/"))
+		$entitlementsFile:=File:C1566(Replace string:C233(This:C1470.config.entitlementsFile; "\\"; "/"))
 		
 		If (Not:C34($entitlementsFile.exists))
 			Storage:C1525.github.debug("absolute not exists:"+$entitlementsFile.path)
-			$entitlementsFile:=$config.workingDirectory.file(Replace string:C233($config.entitlementsFile; "\\"; "/"))
+			$entitlementsFile:=This:C1470.config.workingDirectory.file(Replace string:C233(This:C1470.config.entitlementsFile; "\\"; "/"))
 			Storage:C1525.github.debug("try with relative to working dir:"+$entitlementsFile.path)
 		End if 
 		
@@ -703,7 +695,7 @@ Function sign() : Object
 	// customize by config?
 	
 	var $certificateName : Text
-	$certificateName:=String:C10($config.signCertificate)
+	$certificateName:=String:C10(This:C1470.config.signCertificate)
 	If (Length:C16($certificateName)=0)
 		Storage:C1525.github.error("No certificate name specified")
 		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No certificate name specified"))
@@ -732,11 +724,11 @@ Function sign() : Object
 	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
 	Storage:C1525.github.debug(JSON Stringify:C1217($status))
 	
-	If (($status.success) && ($config.signFiles#Null:C1517) && (Value type:C1509($config.signFiles)=Is collection:K8:32))
+	If (($status.success) && (This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
 		
 		var $signFile : 4D:C1709.File
 		var $signFilePath : Text
-		For each ($signFilePath; $config.signFiles)
+		For each ($signFilePath; This:C1470.config.signFiles)
 			Storage:C1525.github.notice("Sign "+$signFilePath)
 			
 			$signFile:=$baseFolder.file($signFilePath)
@@ -771,12 +763,8 @@ Function sign() : Object
 	// MARK:- archive
 	
 Function archive() : Object
-	
-	var $config : Object
-	$config:=This:C1470.config
-	
 	var $baseFolder : 4D:C1709.Folder
-	$baseFolder:=$config.file.parent.parent
+	$baseFolder:=This:C1470._baseFolder()
 	
 	This:C1470._cleanDatabase($baseFolder)
 	var $status : Object
@@ -784,7 +772,7 @@ Function archive() : Object
 	Storage:C1525.github.debug("Action build added, because pack action defined")
 	
 	var $archiveFile : 4D:C1709.File
-	$archiveFile:=$baseFolder.parent.file($config.file.name+".zip")
+	$archiveFile:=$baseFolder.parent.file(This:C1470.config.file.name+".zip")
 	
 	If (Is macOS:C1572)
 		var $cmd : Text
@@ -820,21 +808,18 @@ Function archive() : Object
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
 	
-	var $config : Object
-	$config:=This:C1470.config
-	
 	var $file : 4D:C1709.File
 	var $folder : 4D:C1709.Folder
 	
-	If ($config.cleanInvisible=Null:C1517)
-		$config.cleanInvisible:=True:C214
+	If (This:C1470.config.cleanInvisible=Null:C1517)
+		This:C1470.config.cleanInvisible:=True:C214
 	End if 
-	If ($config.cleanData=Null:C1517)
-		$config.cleanData:=True:C214
+	If (This:C1470.config.cleanData=Null:C1517)
+		This:C1470.config.cleanData:=True:C214
 	End if 
 	
 	// invisible files
-	If ($config.cleanInvisible)
+	If (This:C1470.config.cleanInvisible)
 		For each ($file; $base.files().query("fullName=.@"))
 			$file.delete()
 		End for each 
@@ -884,7 +869,7 @@ Function _cleanDatabase($base : 4D:C1709.Folder)
 	End for each 
 	
 	// Delete some other unused files 
-	If ($config.cleanData)
+	If (This:C1470.config.cleanData)
 		For each ($file; $folder.files().query("extension=.4DD OR extension=.Match"))
 			
 			Storage:C1525.github.debug("Removing data file "+$file.path)
