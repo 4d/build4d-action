@@ -80,6 +80,7 @@ The options are the same than tool4d-action: https://github.com/4d/tool4d-action
 See documentation of `Compiler projet` 4d command for more information
 
 - `targets`: x86_64_generic or/and arm64_macOS_lib (default: empty string, ie. do only check syntax)
+  - support some shortcut: all (x86_64_generic & arm64_macOS_lib), current, available (on macOS x86_64_generic & arm64_macOS_lib, otherwise x86_64_generic)
 - `type-inference`: all, locals or none (default: none)
 - `generate-symbols`: true if needed (default: false)
 - `generate-typing-methods`: reset or append (default: empty string)
