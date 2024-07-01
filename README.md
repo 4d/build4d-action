@@ -73,7 +73,7 @@ You could pass the path of the project to compile it, if the project is not insi
 
 #### choosing 4d version
 
-The options are the same than tool4d-action: https://github.com/4d/tool4d-action#choose-tool4d-version-v1
+The options are the same found [tool4d-action project](https://github.com/4d/tool4d-action/blob/main/README.md#choose-the-tool4d-version)
 
 #### compilations options
 
