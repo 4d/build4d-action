@@ -692,6 +692,9 @@ Function sign() : Object
 		Storage:C1525.github.error("No entitlements files")
 		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
 	End if 
+	
+	$entitlementsFile:=File:C1566($entitlementsFile.platformPath; fk platform path:K87:2)
+	
 	// customize by config?
 	
 	var $certificateName : Text
