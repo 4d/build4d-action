@@ -724,7 +724,7 @@ Function sign() : Object
 	End if 
 	
 	var $status : Object
-	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors)
+	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
 	Storage:C1525.github.debug(JSON Stringify:C1217($status))
 	
 	If (($status.success) && (This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
@@ -732,9 +732,11 @@ Function sign() : Object
 		var $signFile : 4D:C1709.File
 		var $signFilePath : Text
 		For each ($signFilePath; This:C1470.config.signFiles)
+			
 			Storage:C1525.github.notice("Sign "+$signFilePath)
 			
 			$signFile:=$baseFolder.file($signFilePath)
+			Storage:C1525.github.debug("File "+$signFile.path+" exists?"+String:C10($signFile.exists))
 			
 			$cmd:=$cmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
 			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
@@ -746,17 +748,18 @@ Function sign() : Object
 				Storage:C1525.github.warning($worker.responseError)
 			End if 
 			
-			If ($worker.exitCode#0)
-				$status.success:=False:C215
-			End if 
+			var $statusFile : Object
+			$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
+			Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
 			
-			If ($worker.errors#Null:C1517)
+			// merge result
+			If ($statusFile.errors#Null:C1517)
 				If ($status.errors=Null:C1517)
 					$status.errors:=New collection:C1472
 				End if 
-				$status.errors.combine($worker.errors)
+				$status.errors.combine($statusFile.errors)
 			End if 
-			Storage:C1525.github.debug(JSON Stringify:C1217($status))
+			$status.success:=$status.success && $statusFile.success
 			
 		End for each 
 	End if 
