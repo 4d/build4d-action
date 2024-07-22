@@ -713,6 +713,7 @@ Function sign() : Object
 	Storage:C1525.github.notice("Sign "+$baseFolder.path)
 	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
 	
+	Storage:C1525.github.debug($cmd)
 	var $worker : 4D:C1709.SystemWorker
 	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 	
@@ -739,6 +740,7 @@ Function sign() : Object
 			Storage:C1525.github.debug("File "+$signFile.path+" exists?"+String:C10($signFile.exists))
 			
 			$cmd:=$cmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
+			Storage:C1525.github.debug($cmd)
 			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 			
 			If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
