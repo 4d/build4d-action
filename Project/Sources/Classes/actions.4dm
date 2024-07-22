@@ -730,8 +730,10 @@ Function sign() : Object
 	
 	If (($status.success) && (This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
 		
-		$signScriptFile:=File:C1566(Folder:C1567(fk resources folder:K87:11).file("SignFile.sh").platformPath; fk platform path:K87:2)
-		$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
+		var $signFileScriptFile : 4D:C1709.File
+		
+		$signFileScriptFile:=File:C1566(Folder:C1567(fk resources folder:K87:11).file("SignFile.sh").platformPath; fk platform path:K87:2)
+		$cmdPrefix:="\""+$signFileScriptFile.path+"\" \""+$signScriptFile.path+"\"  \""+$certificateName+"\" "
 		
 		var $signFile : 4D:C1709.File
 		var $signFilePath : Text
