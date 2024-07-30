@@ -54,6 +54,10 @@ inputs:
     description: "Path of entitlement files to sign (if not defined use default one)"
     required: false
     default: ""
+  archive-name:   
+    description: "Define name of the archive produced with action 'archive'. (Default is 4d project name with space replaced by -)"
+    required: false
+    default: ""
 
   product-line:
     description: 'tool4d product line'
@@ -104,6 +108,7 @@ runs:
           "signCertificate":"${{ inputs.sign-certificate }}",
           "signFiles":"${{ inputs.sign-files }}",
           "entitlementsFile":"${{ inputs.entitlements-file }}",
+          "archiveName":"${{ inputs.archive-name }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

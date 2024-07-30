@@ -775,6 +775,13 @@ Function sign() : Object
 	
 	// MARK:- archive
 	
+Function archiveName() : Text
+	If ((Value type:C1509(This:C1470.config.archiveName)=Is text:K8:3) && (Length:C16(This:C1470.config.archiveName)>0))
+		return This:C1470.config.archiveName
+	End if 
+	
+	return Replace string:C233(This:C1470.config.file.name; " "; "-")+".zip"
+	
 Function archive() : Object
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
@@ -785,7 +792,7 @@ Function archive() : Object
 	Storage:C1525.github.debug("Action build added, because pack action defined")
 	
 	var $archiveFile : 4D:C1709.File
-	$archiveFile:=$baseFolder.parent.file(This:C1470.config.file.name+".zip")
+	$archiveFile:=$baseFolder.parent.file(This:C1470.archiveName())
 	
 	If (Is macOS:C1572)
 		var $cmd : Text
