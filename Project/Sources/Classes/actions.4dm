@@ -443,7 +443,7 @@ Function _fillComponents()->$temp4DZs : Collection
 	This:C1470.config.options.components:=New collection:C1472
 	
 	For each ($componentsFolder; $componentsFolders)
-		This:C1470._addDepFromFolder($componentsFolder; $temp4DZs)
+		This:C1470._addDepFromFolder($componentsFolder; This:C1470.config.options; $temp4DZs)
 	End for each 
 	
 	//check if all dep fullfilled to warn if not
@@ -451,7 +451,7 @@ Function _fillComponents()->$temp4DZs : Collection
 		Storage:C1525.github.warning("Maybe missing dependencies: defined "+JSON Stringify:C1217($dependencies)+" but found in Components only "+String:C10(This:C1470.config.options.components.length))
 	End if 
 	
-Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Collection)
+Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $options : Object; $temp4DZs : Collection)
 	If (Not:C34($componentsFolder.exists))
 		return 
 	End if 
@@ -460,6 +460,9 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 	var $dependencyFile : 4D:C1709.File
 	var $status : Object
 	
+	If ($options.components=Null:C1517)
+		$options.components:=New collection:C1472()
+	End if 
 	
 	// MARK: add 4dbase
 	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
@@ -468,16 +471,16 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 			: ($dependency.file($dependency.name+".4DZ").exists)  // archive exists
 				
 				Storage:C1525.github.info("Dependency archive found "+$dependency.name)
-				This:C1470.config.options.components.push($dependency.file($dependency.name+".4DZ"))
+				$options.components.push($dependency.file($dependency.name+".4DZ"))
 				
 			: ($dependency.folder("Project").exists)  // maybe compiled or just have source but no archive yet
 				
-				This:C1470._checkCompile($dependency)  // seems needed even for check syntax
+				This:C1470._checkCompile($dependency; $temp4DZs)  // seems needed even for check syntax
 				
 				$dependencyFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file(This:C1470._not4DName($dependency.name)+".4DZ")
 				$status:=ZIP Create archive:C1640($dependency.folder("Project"); $dependencyFile)
 				Storage:C1525.github.info("Dependency folder found "+$dependency.name)
-				This:C1470.config.options.components.push($dependencyFile)
+				$options.components.push($dependencyFile)
 				$temp4DZs.push($dependencyFile)
 				
 		End case 
@@ -486,10 +489,10 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $temp4DZs : Coll
 	
 	// MARK: add 4dz
 	For each ($dependencyFile; $componentsFolder.files().filter(Formula:C1597($1.value.extension=".4DZ")))
-		This:C1470.config.options.components.push($dependencyFile)
+		$options.components.push($dependencyFile)
 	End for each 
 	
-Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
+Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status : Object
 	var $compiledCodeFolder : 4D:C1709.Folder
 	$compiledCodeFolder:=$base.folder("Project/DerivedData/CompiledCode")
 	If (($compiledCodeFolder.exists) && (($compiledCodeFolder.files().length+$compiledCodeFolder.folders().length)#0))  // XXX suppose already compiled, maybe do according to target check if there is arm lib etc...
@@ -512,6 +515,9 @@ Function _checkCompile($base : 4D:C1709.Folder)->$status : Object
 	
 	var $options : Object
 	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	
+	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
+	
 	Storage:C1525.github.debug("compiling project file from '"+$projectFile.path+"' with option "+JSON Stringify:C1217($options))
 	$status:=Compile project:C1760($projectFile; $options)
 	
