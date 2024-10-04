@@ -716,25 +716,12 @@ Function sign() : Object
 	
 	// Sign base
 	
-	Storage:C1525.github.notice("Sign "+$baseFolder.path)
-	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
-	
-	Storage:C1525.github.debug($cmd)
-	var $worker : 4D:C1709.SystemWorker
-	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
-	
-	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
-		Storage:C1525.github.info($worker.response)
-	End if 
-	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-		Storage:C1525.github.warning($worker.responseError)
-	End if 
-	
 	var $status : Object
-	$status:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
-	Storage:C1525.github.debug(JSON Stringify:C1217($status))
+	$status:=New object:C1471("success"; True:C214)
 	
-	If (($status.success) && (This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
+	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
+		
+		Storage:C1525.github.notice("Sign defined files")
 		
 		var $signFileScriptFile : 4D:C1709.File
 		
@@ -765,19 +752,41 @@ Function sign() : Object
 			$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
 			Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
 			
-			// merge result
-			If ($statusFile.errors#Null:C1517)
-				If ($status.errors=Null:C1517)
-					$status.errors:=New collection:C1472
-				End if 
-				$status.errors.combine($statusFile.errors)
-			End if 
-			$status.success:=$status.success && $statusFile.success
+			This:C1470._mergeResult($status; $statusFile)
 			
 		End for each 
 	End if 
 	
+	Storage:C1525.github.notice("Sign "+$baseFolder.path)
+	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
+	
+	Storage:C1525.github.debug($cmd)
+	var $worker : 4D:C1709.SystemWorker
+	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+	
+	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
+		Storage:C1525.github.info($worker.response)
+	End if 
+	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
+		Storage:C1525.github.warning($worker.responseError)
+	End if 
+	
+	$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
+	Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
+	
+	This:C1470._mergeResult($status; $statusFile)
+	
 	return $status
+	
+Function _mergeResult($to : Object; $from : Object)
+	
+	If ($from.errors#Null:C1517)
+		If ($to.errors=Null:C1517)
+			$to.errors:=New collection:C1472
+		End if 
+		$to.errors.combine($from.errors)
+	End if 
+	$to.success:=$to.success && $from.success
 	
 	// MARK:- archive
 	
