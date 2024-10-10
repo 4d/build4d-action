@@ -515,6 +515,7 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	
 	var $options : Object
 	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
 	
 	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
 	
@@ -734,23 +735,46 @@ Function sign() : Object
 		End if 
 		
 		// create temporary keychain
+		var $keyChainOk : Boolean
+		$keyChainOk:=True:C214
 		$cmd:="security create-keychain -p \""+String:C10(This:C1470.config.keyChainPassword)+"\" \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		Storage:C1525.github.debug($cmd)
 		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		$keyChainOk:=$worker.exitCode=0
 		
 		$cmd:="security set-keychain-settings -lut 21600 \""+String:C10(This:C1470.config.keyChainPath)+"\""
-		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		Storage:C1525.github.debug($cmd)
+		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
+		$keyChainOk:=$worker.exitCode=0
 		
 		$cmd:="security unlock-keychain -p \""+String:C10(This:C1470.config.keyChainPassword)+"\" \""+String:C10(This:C1470.config.keyChainPath)+"\""
-		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		Storage:C1525.github.debug($cmd)
+		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
+		$keyChainOk:=$worker.exitCode=0
+		
 		// import certificate to keychain
-		$cmd:="security import \""+String:C10(This:C1470.config.p12Path)+"\" -P \""+(This:C1470.config.p12Password)+"\" -A -t cert -f pkcs12 -k \""+String:C10(This:C1470.config.keyChainPath)+"\""
-		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		$cmd:="security import \""+String:C10(This:C1470.config.p12Path)+"\" -P \""+String:C10(This:C1470.config.p12Password)+"\" -A -t cert -f pkcs12 -k \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		Storage:C1525.github.debug($cmd)
+		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
+		$keyChainOk:=$worker.exitCode=0
 		
 		$cmd:="security set-key-partition-list-S apple-tool : ,apple : -k "+String:C10(This:C1470.config.keyChainPasword)+" \""+String:C10(This:C1470.config.keyChainPath)+"\""
-		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		Storage:C1525.github.debug($cmd)
+		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
+		$keyChainOk:=$worker.exitCode=0
+		
+		If ($worker.exitCode#0)
+			If ($worker.responseError#Null:C1517)
+				Storage:C1525.github.error(String:C10($worker.responseError))
+			End if 
+			If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
+				Storage:C1525.github.info($worker.response)
+			End if 
+		End if 
+		
 		// info: $cmd:="security list-keychain -d user -s "+String(This.config.keyChainPath)
 		
-		// TODO: check each command status
+		// TODO: check each command status and stop
 		
 	End if 
 	
@@ -792,7 +816,7 @@ Function sign() : Object
 				Storage:C1525.github.info($worker.response)
 			End if 
 			If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-				Storage:C1525.github.warning($worker.responseError)
+				Storage:C1525.github.error($worker.responseError)
 			End if 
 			
 			var $statusFile : Object
@@ -814,8 +838,10 @@ Function sign() : Object
 		Storage:C1525.github.info($worker.response)
 	End if 
 	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-		Storage:C1525.github.warning($worker.responseError)
+		Storage:C1525.github.error($worker.responseError)
 	End if 
+	
+	// TODO: check  command status to make file
 	
 	$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
 	Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
