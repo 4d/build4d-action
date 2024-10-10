@@ -731,7 +731,11 @@ Function sign() : Object
 			This:C1470.config.keyChainPassword:=Generate UUID:C1066+Generate UUID:C1066
 		End if 
 		If (This:C1470.config.keyChainPath=Null:C1517)
-			This:C1470.config.keyChainPath:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("app-signing.keychain-db").path
+			$keyChainFile:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("app-signing.keychain-db")
+			If ($keyChainFile.exists)
+				$keyChainFile.delete()
+			End if 
+			This:C1470.config.keyChainPath:=$keyChainFile.path
 		End if 
 		
 		// create temporary keychain
@@ -758,7 +762,7 @@ Function sign() : Object
 		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
 		$keyChainOk:=$worker.exitCode=0
 		
-		$cmd:="security set-key-partition-list-S apple-tool : ,apple : -k "+String:C10(This:C1470.config.keyChainPasword)+" \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$cmd:="security set-key-partition-list -S apple-tool:,apple: -k "+String:C10(This:C1470.config.keyChainPassword)+" \""+String:C10(This:C1470.config.keyChainPath)+"\""
 		Storage:C1525.github.debug($cmd)
 		$worker:=$keyChainOk ? 4D:C1709.SystemWorker.new($cmd).wait() : $worker
 		$keyChainOk:=$worker.exitCode=0
@@ -854,11 +858,10 @@ Function sign() : Object
 		
 		If (This:C1470.config.keyChainPath#Null:C1517)
 			
-			var $keyChainFile : 4D:C1709.File
 			$keyChainFile:=File:C1566(This:C1470.config.keyChainPath)
 			If ($keyChainFile.exists)
 				
-				$cmd:="bash security delete-keychain \""+String:C10(This:C1470.config.keyChainPath)+"\""
+				$cmd:="security delete-keychain \""+String:C10(This:C1470.config.keyChainPath)+"\""
 				$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 				
 				$keyChainFile.delete()
