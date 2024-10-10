@@ -3,22 +3,29 @@
 nameCertificat=$1
 PathApp=$2
 Entitlements=$3
+keyChain=$4
 
 function SignFile ()
 {
     local CertifName="$1"
     local Entitlements="$2"
     local file="$3"
-    local force="$4"
+    local keyChain="$4"
+    local force="$5"
 
     if [ ! -L "$file" ]
         then
+
+        if [ ! -z "$keyChain" ]
+        then
+            keyChain=" --keychain \"$keyChain\" " 
+        fi
         if [ "$force" = true ]
             then
-            codesign -f --sign "$CertifName" --verbose --timestamp --options runtime --entitlements "$Entitlements" "$file" 2>&1
+            codesign -f --sign "$CertifName" $keyChain --verbose --timestamp --options runtime --entitlements "$Entitlements" "$file" 2>&1
             let FlagError=$?
         else
-            v=$(eval "codesign --sign '$CertifName' --verbose --timestamp --options runtime --entitlements '$Entitlements' '$file' 2>&1")
+            v=$(eval "codesign --sign '$CertifName' $keyChain --verbose --timestamp --options runtime --entitlements '$Entitlements' '$file' 2>&1")
             let FlagError=$?
             output=$v
             if [ "$FlagError" -eq "1" ]
@@ -30,7 +37,7 @@ function SignFile ()
 					then
 						let FlagError=0
 					else
-						v=$(eval "codesign -f --sign '$CertifName' --verbose --timestamp --options runtime --entitlements '$Entitlements' '$file' 2>&1")
+						v=$(eval "codesign -f --sign '$CertifName' $keyChain --verbose --timestamp --options runtime --entitlements '$Entitlements' '$file' 2>&1")
 						let FlagError=$?
 
                         output=$v
@@ -46,7 +53,7 @@ function SignFile ()
     return $FlagError
 }
 
-SignFile "$nameCertificat" "$Entitlements" "$PathApp" false
+SignFile "$nameCertificat" "$Entitlements" "$PathApp" "$keyChain" false
 
 boolError=$?
 exit $boolError

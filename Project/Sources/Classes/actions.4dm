@@ -655,6 +655,7 @@ Function _baseFolder() : 4D:C1709.Folder
 	
 Function sign() : Object
 	
+	var $worker : 4D:C1709.SystemWorker
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
 	
@@ -710,9 +711,55 @@ Function sign() : Object
 		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No certificate name specified"))
 	End if 
 	
+	If (This:C1470.config.p12#Null:C1517)
+		
+		If (This:C1470.config.p12Path=Null:C1517)
+			This:C1470.config.p12Path:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("app-signing.p12").path
+		End if 
+		
+		var $blob : Blob
+		BASE64 DECODE:C896(String:C10(This:C1470.config.p12); $blob)
+		
+		File:C1566(This:C1470.config.p12Path).setContent($blob)
+		
+	End if 
+	
+	If (This:C1470.config.p12Path#Null:C1517)
+		
+		If (This:C1470.config.keyChainPassword=Null:C1517)
+			This:C1470.config.keyChainPassword:=Generate UUID:C1066+Generate UUID:C1066
+		End if 
+		If (This:C1470.config.keyChainPath=Null:C1517)
+			This:C1470.config.keyChainPath:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("app-signing.keychain-db").path
+		End if 
+		
+		// create temporary keychain
+		$cmd:="security create-keychain -p \""+String:C10(This:C1470.config.keyChainPassword)+"\" \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		
+		$cmd:="security set-keychain-settings -lut 21600 \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		
+		$cmd:="security unlock-keychain -p \""+String:C10(This:C1470.config.keyChainPassword)+"\" \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		// import certificate to keychain
+		$cmd:="security import \""+String:C10(This:C1470.config.p12Path)+"\" -P \""+(This:C1470.config.p12Password)+"\" -A -t cert -f pkcs12 -k \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		
+		$cmd:="security set-key-partition-list-S apple-tool : ,apple : -k "+String:C10(This:C1470.config.keyChainPasword)+" \""+String:C10(This:C1470.config.keyChainPath)+"\""
+		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+		// info: $cmd:="security list-keychain -d user -s "+String(This.config.keyChainPath)
+		
+		// TODO: check each command status
+		
+	End if 
+	
 	var $cmdPrefix; $cmdSuffix; $cmd : Text
 	$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
 	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
+	If (This:C1470.config.keyChainPath#Null:C1517)
+		$cmdSuffix+=" \""+This:C1470.config.keyChainPath+"\""
+	End if 
 	
 	// Sign base
 	
@@ -761,7 +808,6 @@ Function sign() : Object
 	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
 	
 	Storage:C1525.github.debug($cmd)
-	var $worker : 4D:C1709.SystemWorker
 	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 	
 	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
@@ -775,6 +821,34 @@ Function sign() : Object
 	Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
 	
 	This:C1470._mergeResult($status; $statusFile)
+	
+	
+	// clean keychain and certificate created
+	If (This:C1470.config.p12Path#Null:C1517)  // we create a keychain from p12 file
+		
+		If (This:C1470.config.keyChainPath#Null:C1517)
+			
+			var $keyChainFile : 4D:C1709.File
+			$keyChainFile:=File:C1566(This:C1470.config.keyChainPath)
+			If ($keyChainFile.exists)
+				
+				$cmd:="bash security delete-keychain \""+String:C10(This:C1470.config.keyChainPath)+"\""
+				$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+				
+				$keyChainFile.delete()
+			End if 
+			
+		End if 
+		
+		If (This:C1470.config.p12#Null:C1517)  // we create it, we remove it
+			var $p12File : 4D:C1709.File
+			$p12File:=File:C1566(This:C1470.config.p12Path)
+			If ($p12File.exists)
+				$p12File.delete()
+			End if 
+		End if 
+	End if 
+	
 	
 	return $status
 	
