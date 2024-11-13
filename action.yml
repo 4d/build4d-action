@@ -93,7 +93,7 @@ runs:
         echo "TMP=$MY_RUNNER_TMP"
         echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
     - id: tool4d
-      uses: 4d/tool4d-action@v2
+      uses: 4d/tool4d-action@vubuntu24
       env:
         GITHUB_THIS_ACTION_PATH: ${{ github.action_path }}
       with:
