@@ -807,6 +807,9 @@ Function archive() : Object
 	$baseFolder:=This:C1470._baseFolder()
 	
 	This:C1470._cleanDatabase($baseFolder)
+	
+	This:C1470._moveToContents($baseFolder)
+	
 	var $status : Object
 	
 	Storage:C1525.github.debug("Action build added, because pack action defined")
@@ -845,6 +848,24 @@ Function archive() : Object
 	Storage:C1525.github.debug(JSON Stringify:C1217($status))
 	
 	return $status
+	
+Function _moveToContents($baseFolder : 4D:C1709.Folder)
+	var $contentFolder : 4D:C1709.Folder
+	$contentFolder:=$baseFolder.folder("Contents")
+	If (Not:C34($contentFolder.exists))
+		$contentFolder.create()
+	End if 
+	
+	var $childFolder : 4D:C1709.Folder
+	For each ($childFolder; $baseFolder.folders())
+		If ($childFolder.name#"Contents")
+			$childFolder.moveTo($contentFolder)
+		End if 
+	End for each 
+	var $childFile : 4D:C1709.File
+	For each ($childFile; $baseFolder.files())
+		$childFile.moveTo($contentFolder)
+	End for each 
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
 	
