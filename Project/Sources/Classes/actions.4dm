@@ -467,11 +467,16 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $options : Objec
 	// MARK: add 4dbase
 	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
 		
+		var $4dz:=$dependency.file($dependency.name+".4DZ")
+		If (Not:C34($4dz.exists))
+			$4dz:=$dependency.folder("Contents").file($dependency.name+".4DZ")
+		End if 
+		
 		Case of 
-			: ($dependency.file($dependency.name+".4DZ").exists)  // archive exists
+			: ($4dz.exists)  // archive exists
 				
 				Storage:C1525.github.info("Dependency archive found "+$dependency.name)
-				$options.components.push($dependency.file($dependency.name+".4DZ"))
+				$options.components.push($4dz)
 				
 			: ($dependency.folder("Project").exists)  // maybe compiled or just have source but no archive yet
 				
