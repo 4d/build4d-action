@@ -457,7 +457,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $options : Objec
 	End if 
 	
 	var $dependency : 4D:C1709.Folder
-	var $dependencyFile : 4D:C1709.File
+	var $dependencyFile; $4dz : 4D:C1709.File
 	var $status : Object
 	
 	If ($options.components=Null:C1517)
@@ -467,7 +467,7 @@ Function _addDepFromFolder($componentsFolder : 4D:C1709.Folder; $options : Objec
 	// MARK: add 4dbase
 	For each ($dependency; $componentsFolder.folders().filter(Formula:C1597($1.value.extension=".4dbase")))
 		
-		var $4dz:=$dependency.file($dependency.name+".4DZ")
+		$4dz:=$dependency.file($dependency.name+".4DZ")
 		If (Not:C34($4dz.exists))
 			$4dz:=$dependency.folder("Contents").file($dependency.name+".4DZ")
 		End if 
