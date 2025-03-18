@@ -169,6 +169,9 @@ Function _setup($config : Object)
 		
 	End if 
 	
+	If (This:C1470.config.outputUseContents=Null:C1517)
+		This:C1470.config.outputUseContents:=This:C1470.config.actions.includes("pack")
+	End if 
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
 		
@@ -245,17 +248,22 @@ Function build()->$status : Object
 				return $status
 			End if 
 		End if 
+		
+		If (Bool:C1537(This:C1470.config.outputUseContents))
+			$outputDir:=$outputDir.folder("Contents")
+		End if 
+		
 		If (Not:C34($outputDir.exists))
 			$outputDir.create()
 		End if 
+		
 		For each ($tmpFile; $baseFolder.files())
-			
 			If (("tool4d.tar.xz"#$tmpFile.fullName)\
 				 && (".DS_Store"#$tmpFile.fullName))
 				$tmpFile.copyTo($outputDir)
 			End if 
-			
 		End for each 
+		
 		For each ($tmpFolder; $baseFolder.folders())
 			If (($outputDir.parent.path#$tmpFolder.path)\
 				 && ($tmpFolder.fullName#"Components")\
