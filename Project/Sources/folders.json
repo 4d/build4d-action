@@ -1,6 +1,7 @@
 {
 	"error": {
 		"methods": [
+			"noError",
 			"onError",
 			"onFlagError"
 		],

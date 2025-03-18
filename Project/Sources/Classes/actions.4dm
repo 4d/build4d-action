@@ -76,8 +76,12 @@ Function _setup($config : Object)
 		Storage:C1525.github.debug("config path "+This:C1470.config.path)
 		var $methodOnError : Text
 		$methodOnError:=Method called on error:C704()
-		ON ERR CALL:C155("noError")  // no Try (compatible with v20)
-		This:C1470.config.file:=File:C1566(This:C1470.config.path)
+		ON ERR CALL:C155("noError")  // no Try (compatible with v20
+		If (Is Windows:C1573)
+			This:C1470.config.file:=File:C1566(Replace string:C233(This:C1470.config.path; "\\"; "/"))
+		Else 
+			This:C1470.config.file:=File:C1566(This:C1470.config.path)
+		End if 
 		ON ERR CALL:C155($methodOnError)
 		
 		
