@@ -1,3 +1,7 @@
+// property errorFlag : Text
+// property failure : Boolean
+// property isDev : Boolean
+
 Class constructor($github : Object)
 	This:C1470.errorFlag:=$github.temporaryFolder().file("error_flag").path
 	This:C1470.failure:=False:C215

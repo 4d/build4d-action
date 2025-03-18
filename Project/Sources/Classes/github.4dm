@@ -1,3 +1,6 @@
+// property isDebug : Boolean
+// property isDev : Boolean
+
 Class constructor
 	This:C1470.isDebug:=False:C215
 	This:C1470.isDev:=isDev

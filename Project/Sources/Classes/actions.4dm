@@ -1,3 +1,5 @@
+// property config : Object
+
 Class constructor($config : Object)
 	This:C1470._setup($config)
 	
@@ -72,7 +74,12 @@ Function _setup($config : Object)
 	Else 
 		
 		Storage:C1525.github.debug("config path "+This:C1470.config.path)
+		var $methodOnError : Text
+		$methodOnError:=Method called on error:C704()
+		ON ERR CALL:C155("noError")  // no Try (compatible with v20)
 		This:C1470.config.file:=File:C1566(This:C1470.config.path)
+		ON ERR CALL:C155($methodOnError)
+		
 		
 		If ((This:C1470.config.file=Null:C1517) || Not:C34(This:C1470.config.file.exists) || (This:C1470._baseFolder()=Null:C1517))
 			
