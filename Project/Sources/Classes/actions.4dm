@@ -110,9 +110,15 @@ Function _setup($config : Object)
 			
 			ON ERR CALL:C155("noError")  // no Try (compatible with v20
 			This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
-			If (This:C1470.config.file=Null:C1517)  // retry with relative but prefixed by workding directory without \\ due to issue to pass args
-				This:C1470.config.path:=Replace string:C233(This:C1470.config.path; Replace string:C233(This:C1470.config.workingDirectory; "\\"; ""); "")
-				This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
+			If (Is Windows:C1573)
+				If (This:C1470.config.file=Null:C1517)  // retry with relative but prefixed by workding directory without \\ due to issue to pass args
+					This:C1470.config.path:=Replace string:C233(This:C1470.config.path; Replace string:C233(This:C1470.config.workingDirectory; "\\"; ""); "")
+					If (Position:C15("/"; This:C1470.config.path)=1)
+						This:C1470.config.path:=Delete string:C232(This:C1470.config.path; 1; 1)
+					End if 
+					Storage:C1525.github.debug("config path with working directory try with modifyed one "+This:C1470.config.path)
+					This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
+				End if 
 			End if 
 			ON ERR CALL:C155($methodOnError)
 			If (This:C1470.config.file#Null:C1517)
