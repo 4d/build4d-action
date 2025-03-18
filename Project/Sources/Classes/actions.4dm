@@ -94,6 +94,7 @@ Function _setup($config : Object)
 			If (Is Windows:C1573)
 				
 				This:C1470.config.relative:=Replace string:C233(This:C1470.config.workingDirectory; This:C1470.config.path; "")
+				This:C1470.config.relative:=Replace string:C233(Replace string:C233(This:C1470.config.workingDirectory; "\\"; ""); This:C1470.config.path; "")  // due to issue to pass it
 				This:C1470.config.relative:=Replace string:C233(This:C1470.config.relative; "/"; "\\")
 				If (Position:C15("\\"; This:C1470.config.relative)=1)
 					This:C1470.config.relative:=Delete string:C232(This:C1470.config.relative; 1; 1)
@@ -107,12 +108,19 @@ Function _setup($config : Object)
 				This:C1470.config.workingDirectoryFolder:=Folder:C1567(This:C1470.config.workingDirectory)
 			End if 
 			
+			ON ERR CALL:C155("noError")  // no Try (compatible with v20
 			This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
+			If (This:C1470.config.file=Null:C1517)  // retry with relative but prefixed by workding directory without \\ due to issue to pass args
+				This:C1470.config.path:=Replace string:C233(This:C1470.config.path; Replace string:C233(This:C1470.config.workingDirectory; "\\"; ""); "")
+				This:C1470.config.file:=This:C1470.config.workingDirectoryFolder.file(This:C1470.config.path)
+			End if 
+			ON ERR CALL:C155($methodOnError)
 			If (This:C1470.config.file#Null:C1517)
 				This:C1470.config.path:=This:C1470.config.file.path
 				Storage:C1525.github.debug("config path with working directory "+This:C1470.config.path)
+				
+				This:C1470.config.file:=File:C1566(This:C1470.config.file.platformPath; fk platform path:K87:2)  // unbox if needed
 			End if 
-			This:C1470.config.file:=File:C1566(This:C1470.config.file.platformPath; fk platform path:K87:2)  // unbox if needed
 			
 		End if 
 		
@@ -943,13 +951,13 @@ Function run() : Object
 			$status.errors:=New collection:C1472("no correct project file path provided")
 			$status.success:=False:C215
 			
-		: (File:C1566(This:C1470.config.path)=Null:C1517)  // just because it failed with mixed / and \ TODO: clean path
+		: (FileSafe(This:C1470.config.path)=Null:C1517)  // just because it failed with mixed / and \ TODO: clean path
 			
 			Storage:C1525.github.error("project file "+This:C1470.config.path+" cannot be parsed")
 			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" cannot be parsed")
 			$status.success:=False:C215
 			
-		: (Not:C34(File:C1566(This:C1470.config.path).exists))
+		: (Not:C34(FileSafe(This:C1470.config.path).exists))
 			
 			Storage:C1525.github.error("project file "+This:C1470.config.path+" do not exists")
 			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" do not exists")
