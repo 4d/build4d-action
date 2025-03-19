@@ -846,6 +846,10 @@ Function archive() : Object
 	
 	Storage:C1525.github.debug("Action build added, because pack action defined")
 	
+	If (Bool:C1537(This:C1470.config.outputUseContents))
+		$baseFolder:=$baseFolder.parent
+	End if 
+	
 	var $archiveFile : 4D:C1709.File
 	$archiveFile:=$baseFolder.parent.file(This:C1470.archiveName())
 	
