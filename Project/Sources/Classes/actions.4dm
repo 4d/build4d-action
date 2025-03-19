@@ -251,26 +251,28 @@ Function build()->$status : Object
 		
 		If (Bool:C1537(This:C1470.config.outputUseContents))
 			$outputDir:=$outputDir.folder("Contents")
+			Storage:C1525.github.debug("...into subfolder Contents: "+$outputDir.path)
 		End if 
 		
 		If (Not:C34($outputDir.exists))
+			Storage:C1525.github.debug("...create output folder")
 			$outputDir.create()
 		End if 
 		
+		var $excludeFiles : Collection
+		$excludeFiles:=New collection:C1472("tool4d.tar.xz"; ".DS_Store")
 		For each ($tmpFile; $baseFolder.files())
-			If (("tool4d.tar.xz"#$tmpFile.fullName)\
-				 && (".DS_Store"#$tmpFile.fullName))
+			If (Not:C34($excludeFiles.includes($tmpFile.fullName)))
 				$tmpFile.copyTo($outputDir)
 			End if 
 		End for each 
 		
+		var $excludeFolders : Collection
+		$excludeFolders:=New collection:C1472("Components"; "tool4d.app"; "tool4d")
 		For each ($tmpFolder; $baseFolder.folders())
-			If (($outputDir.parent.path#$tmpFolder.path)\
-				 && ($tmpFolder.fullName#"Components")\
-				 && (Position:C15("userPreferences."; $tmpFolder.fullName)#1)\
-				 && (Position:C15(".git"; $tmpFolder.fullName)#1)\
-				 && ($tmpFolder.fullName#"tool4d.app")\
-				 && ($tmpFolder.fullName#"tool4d"))
+			If ((Position:C15($tmpFolder.path; $outputDir.path)#1)\
+				 && (Position:C15("userPreferences."; $tmpFolder.fullName)#1) && (Position:C15(".git"; $tmpFolder.fullName)#1)\
+				 && (Not:C34($excludeFolders.includes($tmpFolder.fullName))))
 				$tmpFolder.copyTo($outputDir)
 			End if 
 		End for each 
