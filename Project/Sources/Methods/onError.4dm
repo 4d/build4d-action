@@ -14,7 +14,11 @@ Case of
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Method/"+$caller.name+".4dm").path
 	: ($caller.type="databaseMethod")
 		$caller.name:=Replace string:C233($caller.name; " "; "")
-		$caller.name:=Lowercase:C14($caller.name[[1]])+Substring:C12($caller.name; 2)
+		If (Length:C16($caller.name)>0)
+			//%W-533.1
+			$caller.name:=Lowercase:C14($caller.name[[1]])+Substring:C12($caller.name; 2)
+			//%W+533.1
+		End if 
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/DatabaseMethods/"+$caller.name+".4dm").path
 	: ($caller.type="classFunction")
 		$metadata.file:=Folder:C1567(Folder:C1567(fk database folder:K87:14).platformPath; fk platform path:K87:2).file("Project/Sources/Classes/"+Substring:C12($caller.name; 1; Position:C15("."; $caller.name)-1)+".4dm").path

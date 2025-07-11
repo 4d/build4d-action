@@ -1,4 +1,4 @@
-//%attributes = {}
+//%attributes = {"invisible":true}
 #DECLARE($path : Text) : 4D:C1709.File
 var $methodOnError : Text
 $methodOnError:=Method called on error:C704()

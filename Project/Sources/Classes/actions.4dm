@@ -135,7 +135,9 @@ Function _setup($config : Object)
 	
 	// check actions
 	If ((Value type:C1509(This:C1470.config.actions)=Is text:K8:3) && (Length:C16(This:C1470.config.actions)>0))
+		//%W-533.1
 		If (This:C1470.config.actions[[1]]="[")
+			//%W+533.1
 			This:C1470.config.actions:=JSON Parse:C1218(This:C1470.config.actions)
 		Else 
 			This:C1470.config.actions:=Split string:C1554(String:C10(This:C1470.config.actions); ",")
@@ -198,7 +200,9 @@ Function _setup($config : Object)
 	End if 
 	
 	If ((Value type:C1509(This:C1470.config.signFiles)=Is text:K8:3) && (Length:C16(This:C1470.config.signFiles)>0))
+		//%W-533.1
 		If (This:C1470.config.signFiles[[1]]="[")
+			//%W+533.1
 			This:C1470.config.signFiles:=JSON Parse:C1218(This:C1470.config.signFiles)
 		Else 
 			This:C1470.config.signFiles:=Split string:C1554(String:C10(This:C1470.config.signFiles); ",")
