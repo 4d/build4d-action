@@ -391,7 +391,7 @@ Function _fCheckTargetName($object : Object)
 		: (Not:C34(Value type:C1509($object.value)=Is text:K8:3))
 			$object.result:=Null:C1517
 		: ($object.value="current")
-			$object.result:=(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
+			$object.result:=(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
 		: (($object.value="x86_64") || ($object.value="x86-64") || ($object.value="x64") || ($object.value="AMD64") || ($object.value="Intel 64"))
 			$object.result:="x86_64_generic"
 		: ($object.value="arm64")
@@ -568,7 +568,7 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	End if 
 	
 	var $options : Object
-	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
 	
 	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
 	
@@ -712,10 +712,18 @@ Function sign() : Object
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
 	
-	If (Not:C34(Is macOS:C1572))
-		Storage:C1525.github.warning("Signature ignored on this OS")
-		return New object:C1471("success"; True:C214)
-	End if 
+	// Support both macOS and Windows signing
+	Case of 
+		: (Is macOS:C1572)
+			return This:C1470._signMacOS($baseFolder)
+		: (Is Windows:C1573)
+			return This:C1470._signWindows($baseFolder)
+		Else 
+			Storage:C1525.github.warning("Signature ignored on this OS - only macOS and Windows are supported")
+			return New object:C1471("success"; True:C214)
+	End case 
+	
+Function _signMacOS($baseFolder : 4D:C1709.Folder) : Object
 	
 	var $signScriptFile : 4D:C1709.File
 	$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/SignApp.sh")
@@ -725,6 +733,261 @@ Function sign() : Object
 		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No SignApp.sh script"))
 	End if 
 	
+	// Get entitlements file using helper function
+	var $entitlementsFile : 4D:C1709.File
+	$entitlementsFile:=This:C1470._getEntitlementsFile()
+	
+	If ($entitlementsFile=Null:C1517)
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
+	End if 
+	
+	// Get certificate information
+	var $certificateInfo : Object
+	$certificateInfo:=This:C1470._getCertificateInfo()
+	
+	If (Not:C34($certificateInfo.success))
+		return $certificateInfo
+	End if 
+	
+	// Build signing command
+	var $cmdPrefix; $cmdSuffix; $cmd : Text
+	$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateInfo.name+"\" "
+	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
+	
+	// Add deep signing option
+	If (Bool:C1537(This:C1470.config.signDeep))
+		$cmdSuffix:=$cmdSuffix+" --deep"
+	End if 
+	
+	// Add timestamp option  
+	If (Bool:C1537(This:C1470.config.signTimestamp))
+		$cmdSuffix:=$cmdSuffix+" --timestamp"
+	End if 
+	
+	// Add custom signing options
+	If (Length:C16(String:C10(This:C1470.config.signOptions))>0)
+		$cmdSuffix:=$cmdSuffix+" "+String:C10(This:C1470.config.signOptions)
+	End if 
+	
+	var $status : Object
+	$status:=New object:C1471("success"; True:C214)
+	
+	// Sign additional files if specified
+	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
+		
+		Storage:C1525.github.notice("Sign defined files")
+		
+		var $signFileScriptFile : 4D:C1709.File
+		$signFileScriptFile:=File:C1566(Folder:C1567(fk resources folder:K87:11).file("SignFile.sh").platformPath; fk platform path:K87:2)
+		
+		If ($signFileScriptFile.exists)
+			var $fileCmdPrefix : Text
+			$fileCmdPrefix:="\""+$signFileScriptFile.path+"\" \""+$certificateInfo.name+"\" "
+			
+			var $signFile : 4D:C1709.File
+			var $signFilePath : Text
+			For each ($signFilePath; This:C1470.config.signFiles)
+				// Resolve file path
+				$signFile:=This:C1470._resolveFilePath($signFilePath; $baseFolder)
+				
+				If ($signFile.exists)
+					$cmd:=$fileCmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
+					Storage:C1525.github.debug("Signing file: "+$cmd)
+					
+					// Execute sign command
+					var $fileWorker : 4D:C1709.SystemWorker
+					$fileWorker:=4D:C1709.SystemWorker.new($cmd).wait()
+					
+					If (($fileWorker.response#Null:C1517) && (Length:C16($fileWorker.response)>0))
+						Storage:C1525.github.info($fileWorker.response)
+					End if 
+					If (($fileWorker.responseError#Null:C1517) && (Length:C16($fileWorker.responseError)>0))
+						Storage:C1525.github.warning($fileWorker.responseError)
+					End if 
+					
+					var $fileStatusFile : Object
+					$fileStatusFile:=New object:C1471("success"; $fileWorker.exitCode=0; "errors"; $fileWorker.errors; "exitCode"; $fileWorker.exitCode)
+					Storage:C1525.github.debug(JSON Stringify:C1217($fileStatusFile))
+					
+					This:C1470._mergeResult($status; $fileStatusFile)
+				Else 
+					Storage:C1525.github.warning("Sign file not found: "+$signFilePath)
+				End if 
+			End for each 
+		Else 
+			Storage:C1525.github.warning("SignFile.sh script not found, skipping individual file signing")
+		End if 
+	End if 
+	
+	// Sign base folder
+	Storage:C1525.github.notice("Sign "+$baseFolder.path)
+	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
+	
+	Storage:C1525.github.debug($cmd)
+	
+	// Execute sign command
+	var $mainWorker : 4D:C1709.SystemWorker
+	$mainWorker:=4D:C1709.SystemWorker.new($cmd).wait()
+	
+	If (($mainWorker.response#Null:C1517) && (Length:C16($mainWorker.response)>0))
+		Storage:C1525.github.info($mainWorker.response)
+	End if 
+	If (($mainWorker.responseError#Null:C1517) && (Length:C16($mainWorker.responseError)>0))
+		Storage:C1525.github.warning($mainWorker.responseError)
+	End if 
+	
+	var $mainStatusFile : Object
+	$mainStatusFile:=New object:C1471("success"; $mainWorker.exitCode=0; "errors"; $mainWorker.errors; "exitCode"; $mainWorker.exitCode)
+	Storage:C1525.github.debug(JSON Stringify:C1217($mainStatusFile))
+	
+	This:C1470._mergeResult($status; $mainStatusFile)
+	
+	return $status
+	
+Function _signWindows($baseFolder : 4D:C1709.Folder) : Object
+	
+	Storage:C1525.github.info("Starting Windows code signing")
+	
+	// Check if we have Windows signing configuration
+	var $hasCertificate : Boolean
+	$hasCertificate:=(Length:C16(String:C10(This:C1470.config.signWindowsCertificate))>0) || (Length:C16(String:C10(This:C1470.config.signWindowsThumbprint))>0)
+	
+	If (Not:C34($hasCertificate))
+		Storage:C1525.github.error("No Windows signing certificate or thumbprint specified")
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No Windows signing certificate or thumbprint specified"))
+	End if 
+	
+	// Build signtool command
+	var $cmd : Text
+	$cmd:="signtool sign"
+	
+	// Add certificate source
+	If (Length:C16(String:C10(This:C1470.config.signWindowsThumbprint))>0)
+		$cmd:=$cmd+" /sha1 \""+String:C10(This:C1470.config.signWindowsThumbprint)+"\""
+		$cmd:=$cmd+" /s \""+String:C10(This:C1470.config.signWindowsStore)+"\""
+	Else 
+		If (Length:C16(String:C10(This:C1470.config.signWindowsCertificate))>0)
+			$cmd:=$cmd+" /f \""+String:C10(This:C1470.config.signWindowsCertificate)+"\""
+		End if 
+	End if 
+	
+	// Add timestamp URL if provided
+	If (Length:C16(String:C10(This:C1470.config.signTimestampUrl))>0)
+		$cmd:=$cmd+" /tr \""+String:C10(This:C1470.config.signTimestampUrl)+"\""
+		$cmd:=$cmd+" /td sha256"
+	End if 
+	
+	// Add custom signing options
+	If (Length:C16(String:C10(This:C1470.config.signOptions))>0)
+		var $signOptions : Object
+		$signOptions:=JSON Parse:C1218(String:C10(This:C1470.config.signOptions))
+		If ($signOptions#Null:C1517)
+			// Add Windows signing options inline
+			var $key : Text
+			For each ($key; $signOptions)
+				Case of 
+					: ($key="description") && (Length:C16(String:C10($signOptions[$key]))>0)
+						$cmd:=$cmd+" /d \""+String:C10($signOptions[$key])+"\""
+					: ($key="url") && (Length:C16(String:C10($signOptions[$key]))>0)
+						$cmd:=$cmd+" /du \""+String:C10($signOptions[$key])+"\""
+					: ($key="algorithm") && (Length:C16(String:C10($signOptions[$key]))>0)
+						$cmd:=$cmd+" /fd \""+String:C10($signOptions[$key])+"\""
+					Else 
+						Storage:C1525.github.debug("Unknown Windows signing option: "+$key)
+				End case 
+			End for each 
+		End if 
+	End if 
+	
+	var $status : Object
+	$status:=New object:C1471("success"; True:C214)
+	
+	// Sign additional files if specified
+	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
+		
+		Storage:C1525.github.notice("Sign defined files")
+		
+		var $signFile : 4D:C1709.File
+		var $signFilePath : Text
+		For each ($signFilePath; This:C1470.config.signFiles)
+			// Resolve file path
+			$signFile:=File:C1566(Replace string:C233($signFilePath; "\\"; "/"))
+			
+			If (Not:C34($signFile.exists))
+				$signFile:=$baseFolder.file($signFilePath)
+			End if 
+			
+			If (Not:C34($signFile.exists))
+				If (This:C1470.config.workingDirectory#Null:C1517)
+					$signFile:=Folder:C1567(This:C1470.config.workingDirectory).file($signFilePath)
+				End if 
+			End if 
+			
+			If ($signFile.exists)
+				var $fileCmd : Text
+				$fileCmd:=$cmd+" \""+$signFile.path+"\""
+				Storage:C1525.github.debug("Signing file: "+$fileCmd)
+				
+				// Execute sign command
+				var $worker : 4D:C1709.SystemWorker
+				$worker:=4D:C1709.SystemWorker.new($fileCmd).wait()
+				
+				If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
+					Storage:C1525.github.info($worker.response)
+				End if 
+				If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
+					Storage:C1525.github.warning($worker.responseError)
+				End if 
+				
+				var $statusFile : Object
+				$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
+				Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
+				
+				This:C1470._mergeResult($status; $statusFile)
+			Else 
+				Storage:C1525.github.warning("Sign file not found: "+$signFilePath)
+			End if 
+		End for each 
+	End if 
+	
+	// Sign main executable files in base folder
+	var $executableFiles : Collection
+	$executableFiles:=$baseFolder.files(fk recursive:K87:7).query("extension = .exe OR extension = .dll")
+	
+	If ($executableFiles.length>0)
+		Storage:C1525.github.notice("Signing executable files in "+$baseFolder.path)
+		
+		var $execFile : 4D:C1709.File
+		For each ($execFile; $executableFiles)
+			var $execCmd : Text
+			$execCmd:=$cmd+" \""+$execFile.path+"\""
+			Storage:C1525.github.debug("Signing executable: "+$execCmd)
+			
+			// Execute sign command
+			var $execWorker : 4D:C1709.SystemWorker
+			$execWorker:=4D:C1709.SystemWorker.new($execCmd).wait()
+			
+			If (($execWorker.response#Null:C1517) && (Length:C16($execWorker.response)>0))
+				Storage:C1525.github.info($execWorker.response)
+			End if 
+			If (($execWorker.responseError#Null:C1517) && (Length:C16($execWorker.responseError)>0))
+				Storage:C1525.github.warning($execWorker.responseError)
+			End if 
+			
+			var $execStatusFile : Object
+			$execStatusFile:=New object:C1471("success"; $execWorker.exitCode=0; "errors"; $execWorker.errors; "exitCode"; $execWorker.exitCode)
+			Storage:C1525.github.debug(JSON Stringify:C1217($execStatusFile))
+			
+			This:C1470._mergeResult($status; $execStatusFile)
+		End for each 
+	Else 
+		Storage:C1525.github.warning("No executable files found to sign in "+$baseFolder.path)
+	End if 
+	
+	return $status
+	
+Function _getEntitlementsFile() : 4D:C1709.File
+	
 	var $entitlementsFile : 4D:C1709.File
 	
 	If ((Value type:C1509(This:C1470.config.entitlementsFile)=Is text:K8:3) && (Length:C16(This:C1470.config.entitlementsFile)>0))
@@ -733,13 +996,15 @@ Function sign() : Object
 		
 		If (Not:C34($entitlementsFile.exists))
 			Storage:C1525.github.debug("absolute not exists:"+$entitlementsFile.path)
-			$entitlementsFile:=This:C1470.config.workingDirectory.file(Replace string:C233(This:C1470.config.entitlementsFile; "\\"; "/"))
-			Storage:C1525.github.debug("try with relative to working dir:"+$entitlementsFile.path)
+			If (This:C1470.config.workingDirectory#Null:C1517)
+				$entitlementsFile:=Folder:C1567(This:C1470.config.workingDirectory).file(Replace string:C233(This:C1470.config.entitlementsFile; "\\"; "/"))
+				Storage:C1525.github.debug("try with relative to working dir:"+$entitlementsFile.path)
+			End if 
 		End if 
 		
 		If (Not:C34($entitlementsFile.exists))
 			Storage:C1525.github.error("defined entitlements file seems to not exists")
-			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
+			return Null:C1517
 		End if 
 	Else 
 		
@@ -747,90 +1012,62 @@ Function sign() : Object
 		
 	End if 
 	
-	
 	If (Not:C34($entitlementsFile.exists))
-		Storage:C1525.github.error("No entitlements files")
-		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No entitlements files"))
+		Storage:C1525.github.error("No entitlements files found")
+		return Null:C1517
 	End if 
 	
-	$entitlementsFile:=File:C1566($entitlementsFile.platformPath; fk platform path:K87:2)
+	return File:C1566($entitlementsFile.platformPath; fk platform path:K87:2)
 	
-	// customize by config?
+Function _getCertificateInfo() : Object
 	
-	var $certificateName : Text
-	$certificateName:=String:C10(This:C1470.config.signCertificate)
-	If (Length:C16($certificateName)=0)
-		Storage:C1525.github.error("No certificate name specified")
-		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No certificate name specified"))
+	var $certificateInfo : Object
+	$certificateInfo:=New object:C1471("success"; True:C214)
+	
+	// Check if we have a signing identity (preferred)
+	Case of 
+		: (Length:C16(String:C10(This:C1470.config.signIdentity))>0)
+			$certificateInfo.name:=String:C10(This:C1470.config.signIdentity)
+			Storage:C1525.github.debug("Using signing identity: "+$certificateInfo.name)
+		: (Length:C16(String:C10(This:C1470.config.signCertificate))>0)
+			$certificateInfo.name:=String:C10(This:C1470.config.signCertificate)
+			Storage:C1525.github.debug("Using certificate name: "+$certificateInfo.name)
+		: (Length:C16(String:C10(This:C1470.config.signCertificatePath))>0)
+			Storage:C1525.github.warning("Certificate path provided but identity extraction not implemented")
+			$certificateInfo.name:="Developer ID Application"  // Default fallback
+		: (Length:C16(String:C10(This:C1470.config.keychainPath))>0)
+			Storage:C1525.github.debug("Using keychain: "+String:C10(This:C1470.config.keychainPath))
+			$certificateInfo.name:="Developer ID Application"  // Default fallback
+		Else 
+			Storage:C1525.github.error("No certificate name, identity, or path specified")
+			$certificateInfo.success:=False:C215
+			$certificateInfo.errors:=New collection:C1472("No certificate name, identity, or path specified")
+	End case 
+	
+	return $certificateInfo
+	
+Function _resolveFilePath($filePath : Text; $baseFolder : 4D:C1709.Folder) : 4D:C1709.File
+	
+	var $signFile : 4D:C1709.File
+	
+	// Try as absolute path first
+	$signFile:=File:C1566(Replace string:C233($filePath; "\\"; "/"))
+	
+	If (Not:C34($signFile.exists))
+		// Try relative to base folder
+		$signFile:=$baseFolder.file($filePath)
 	End if 
 	
-	var $cmdPrefix; $cmdSuffix; $cmd : Text
-	$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
-	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
-	
-	// Sign base
-	
-	var $status : Object
-	$status:=New object:C1471("success"; True:C214)
-	
-	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
-		
-		Storage:C1525.github.notice("Sign defined files")
-		
-		var $signFileScriptFile : 4D:C1709.File
-		
-		$signFileScriptFile:=File:C1566(Folder:C1567(fk resources folder:K87:11).file("SignFile.sh").platformPath; fk platform path:K87:2)
-		$cmdPrefix:="\""+$signFileScriptFile.path+"\" \""+$certificateName+"\" "
-		
-		var $signFile : 4D:C1709.File
-		var $signFilePath : Text
-		For each ($signFilePath; This:C1470.config.signFiles)
-			
-			Storage:C1525.github.notice("Sign "+$signFilePath)
-			
-			$signFile:=$baseFolder.file($signFilePath)
-			Storage:C1525.github.debug("File "+$signFile.path+" exists?"+String:C10($signFile.exists))
-			
-			$cmd:=$cmdPrefix+"\""+$signFile.path+"\""+$cmdSuffix
-			Storage:C1525.github.debug($cmd)
-			$worker:=4D:C1709.SystemWorker.new($cmd).wait()
-			
-			If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
-				Storage:C1525.github.info($worker.response)
-			End if 
-			If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-				Storage:C1525.github.warning($worker.responseError)
-			End if 
-			
-			var $statusFile : Object
-			$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
-			Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
-			
-			This:C1470._mergeResult($status; $statusFile)
-			
-		End for each 
+	If (Not:C34($signFile.exists))
+		// Try relative to working directory
+		If (This:C1470.config.workingDirectory#Null:C1517)
+			$signFile:=Folder:C1567(This:C1470.config.workingDirectory).file($filePath)
+		End if 
 	End if 
 	
-	Storage:C1525.github.notice("Sign "+$baseFolder.path)
-	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
+	return $signFile
 	
-	Storage:C1525.github.debug($cmd)
-	var $worker : 4D:C1709.SystemWorker
-	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
 	
-	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
-		Storage:C1525.github.info($worker.response)
-	End if 
-	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-		Storage:C1525.github.warning($worker.responseError)
-	End if 
-	
-	$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
-	Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
-	
-	This:C1470._mergeResult($status; $statusFile)
-	
-	return $status
 	
 Function _mergeResult($to : Object; $from : Object)
 	
