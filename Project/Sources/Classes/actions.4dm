@@ -1003,7 +1003,7 @@ Function run() : Object
 			
 			Storage:C1525.github.debug("...will execute actions: "+This:C1470.config.actions.join(","))
 			
-			This:C1470.config.actions:=This:C1470._sortActions(This:C1470.config.actions)
+			This:C1470.config.actions:=This:C1470._checkActions(This:C1470.config.actions)
 			
 			var $action : Text
 			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
@@ -1021,13 +1021,19 @@ Function run() : Object
 	
 	return $status
 	
-Function _sortActions($actions : Collection) : Collection
+Function _checkActions($actions : Collection) : Collection
 	
+	var $releaseActions:=New collection:C1472("clean"; "build"; "sign"; "pack"; "archive")
+	If ($actions.includes("release"))
+		return $releaseActions
+	End if 
+	
+	// else sort and filter
 	var $sortedAction : Collection
 	$sortedAction:=New collection:C1472()
 	
 	var $action : Text
-	For each ($action; New collection:C1472("clean"; "build"; "sign"; "pack"; "archive"))
+	For each ($action; $releaseActions)
 		
 		If ($actions.includes($action))
 			$sortedAction.push($action)
