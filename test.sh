@@ -12,11 +12,9 @@ else
 fi
 
 options=""
-export WORKINK_DIRECTORY=$(pwd -W)
+export WORKINK_DIRECTORY=$(pwd)
 export ERROR_FLAG=$WORKINK_DIRECTORY/error_flag
 projectToCompile="$WORKINK_DIRECTORY/../tool4d-action-test/Project/tool4d-action-test.4DProject"
-#projectToCompile="$WORKINK_DIRECTORY/../4D-NetKit/Project/4D NetKit.4DProject"   # TODO allow to pass projects or find all project in parent folder
-#projectToCompile="$WORKINK_DIRECTORY/../4D-Mobile-App/Project/4D Mobile App.4DProject" 
 
 [ -f "$ERROR_FLAG" ] && rm "$ERROR_FLAG"
 
