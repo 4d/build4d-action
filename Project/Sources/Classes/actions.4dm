@@ -213,6 +213,11 @@ Function _setup($config : Object)
 	// MARK:- build
 Function build()->$status : Object
 	
+	// Execute before-build script/binary if defined
+	If (Length:C16(String:C10(This:C1470.config.beforeBuild))>0)
+		This:C1470._executeHook("beforeBuild")
+	End if 
+	
 	// get compilation options
 	Case of 
 		: ((Value type:C1509(This:C1470.config.options)=Is text:K8:3) && \
@@ -321,6 +326,11 @@ Function build()->$status : Object
 			
 			Storage:C1525.github.notice("✅ Build success")
 			Storage:C1525.github.addToSummary("## ✅ Build success")
+			
+			// Execute after-build script/binary if defined
+			If ((Length:C16(String:C10(This:C1470.config.afterBuild))>0) && ($status.success))
+				This:C1470._executeHook("afterBuild")
+			End if 
 			
 	End case 
 	
@@ -1026,3 +1036,54 @@ Function _sortActions($actions : Collection) : Collection
 	End for each 
 	
 	return $sortedAction
+	
+Function _executeHook($label : Text)
+	
+	var $command : Text
+	$command:=String:C10(This:C1470.config[$label])
+	
+	If (Length:C16($command)=0)
+		return 
+	End if 
+	
+	Storage:C1525.github.info("Executing command: "+$label)
+	
+	var $worker : 4D:C1709.SystemWorker
+	var $options : Object
+	$options:=New object:C1471()
+	
+	// Set working directory if available
+	If (This:C1470.config.workingDirectory#Null:C1517)
+		$options.currentDirectory:=This:C1470.config.workingDirectory
+	End if 
+	
+	// Add environment variables
+	$options.variables:=GetEnv
+	$options.variables.BUILD_OUTPUT_DIR:=This:C1470.config.outputDirectory#Null:C1517 ? String:C10(This:C1470.config.outputDirectory.path) : ""
+	$options.variables.BUILD_PROJECT_PATH:=This:C1470.config.file#Null:C1517 ? String:C10(This:C1470.config.file.path) : ""
+	$options.variables.BUILD_PROJECT_NAME:=This:C1470.config.file#Null:C1517 ? This:C1470.config.file.name : ""
+	$options.variables.BUILD_STEP:=String:C10($label)
+	
+	// Execute the command
+	$worker:=4D:C1709.SystemWorker.new($command; $options)
+	
+	// Wait for completion and get results
+	$worker.wait()
+	
+	// Report results
+	If ($worker.terminated)
+		If ($worker.exitCode=0)
+			Storage:C1525.github.info("✅ Command executed successfully")
+			If (Length:C16($worker.response)>0)
+				Storage:C1525.github.info("Command output: "+$worker.response)
+			End if 
+		Else 
+			Storage:C1525.github.error("❌ Command failed with exit code: "+String:C10($worker.exitCode))
+			If (Length:C16($worker.responseError)>0)
+				Storage:C1525.github.error("Command error: "+$worker.responseError)
+			End if 
+		End if 
+	Else 
+		Storage:C1525.github.error("❌ Command did not complete")
+	End if 
+	

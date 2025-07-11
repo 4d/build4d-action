@@ -10,6 +10,9 @@ $doLast:=Shift down:C543  // shift to do only last test
 
 // MARK:- test on self without option
 $config:=New object:C1471
+If (Is macOS:C1572)
+	$config.beforeBuild:="/usr/bin/printenv"
+End if 
 $actions:=cs:C1710.actions.new($config)
 $status:=($doLast) ? New object:C1471("success"; True:C214) : $actions.run()
 ASSERT:C1129($status.success; JSON Stringify:C1217($status))

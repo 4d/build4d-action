@@ -58,6 +58,14 @@ inputs:
     description: "Define name of the archive produced with action 'archive'. (Default is 4d project name with space replaced by -)"
     required: false
     default: ""
+  before-build:   
+    description: "Script or binary to execute before the build action starts. Can be a shell command, script path, or executable binary."
+    required: false
+    default: ""
+  after-build:   
+    description: "Script or binary to execute after the build action completes. Can be a shell command, script path, or executable binary."
+    required: false
+    default: ""
 
   product-line:
     description: 'tool4d product line'
@@ -109,6 +117,8 @@ runs:
           "signFiles":"${{ inputs.sign-files }}",
           "entitlementsFile":"${{ inputs.entitlements-file }}",
           "archiveName":"${{ inputs.archive-name }}",
+          "beforeBuild":"${{ inputs.before-build }}",
+          "afterBuild":"${{ inputs.after-build }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

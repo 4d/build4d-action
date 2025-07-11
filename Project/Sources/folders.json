@@ -17,8 +17,10 @@
 	},
 	"utility": {
 		"methods": [
+			"_initSingleton",
 			"Compiler_Methods",
 			"FileSafe",
+			"GetEnv",
 			"isDev",
 			"isTruthly"
 		],
