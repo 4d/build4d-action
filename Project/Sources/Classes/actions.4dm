@@ -1023,7 +1023,8 @@ Function run() : Object
 	
 Function _checkActions($actions : Collection) : Collection
 	
-	var $releaseActions:=New collection:C1472("clean"; "build"; "sign"; "pack"; "archive")
+	var $releaseActions : Collection
+	$releaseActions:=New collection:C1472("clean"; "build"; "sign"; "pack"; "archive")
 	If ($actions.includes("release"))
 		return $releaseActions
 	End if 
