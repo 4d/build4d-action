@@ -54,6 +54,26 @@ inputs:
     description: "Path of entitlement files to sign (if not defined use default one)"
     required: false
     default: ""
+  sign-certificate-base64:
+    description: "Base64 encoded certificate (P12/PFX format)"
+    required: false
+    default: ""
+  sign-certificate-password:
+    description: "Password for the certificate"
+    required: false
+    default: ""
+  sign-certificate-path:
+    description: "Path to certificate file (P12/PFX)"
+    required: false
+    default: ""
+  keychain-password:
+    description: "Password for keychain (macOS only)"
+    required: false
+    default: ""
+  sign-identity:
+    description: "Signing identity (alternative to certificate name)"
+    required: false
+    default: ""
   archive-name:   
     description: "Define name of the archive produced with action 'archive'. (Default is 4d project name with space replaced by -)"
     required: false
@@ -86,20 +106,65 @@ runs:
   using: 'composite'
   steps:
     - id: setup
-      name: Setup environment 
+      name: Setup environment and certificates
       shell: bash
       run: |
         WORKINK_DIRECTORY="${{ github.workspace }}"
         WORKINK_DIRECTORY=$(echo $WORKINK_DIRECTORY|sed -e 's/\\/\\\\/g') # escape workspace for json
         echo "WORKINK_DIRECTORY=$WORKINK_DIRECTORY" >> $GITHUB_ENV
+        
         if [[ -z "${RUNNER_DEBUG}" ]]; then
            echo "RUNNER_DEBUG=0" >> $GITHUB_ENV
         else
            echo "RUNNER_DEBUG=$RUNNER_DEBUG" >> $GITHUB_ENV
         fi
+        
         MY_RUNNER_TMP=$(echo "${{ runner.temp }}" | sed 's/\\/\//g')
         echo "TMP=$MY_RUNNER_TMP"
         echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
+        
+        # Certificate setup for macOS
+        if [[ "$RUNNER_OS" == "macOS" ]]; then
+          # Handle base64 encoded certificate
+          if [[ -n "${{ inputs.sign-certificate-base64 }}" ]]; then
+            CERT_PATH="$MY_RUNNER_TMP/signing_cert.p12"
+            echo "${{ inputs.sign-certificate-base64 }}" | base64 -d > "$CERT_PATH"
+            echo "CERT_PATH=$CERT_PATH" >> $GITHUB_ENV
+            
+            # Create temporary keychain
+            KEYCHAIN_PATH="$MY_RUNNER_TMP/signing.keychain"
+            KEYCHAIN_PASSWORD="${{ inputs.keychain-password }}"
+            if [[ -z "$KEYCHAIN_PASSWORD" ]]; then
+              KEYCHAIN_PASSWORD=$(openssl rand -base64 32)
+            fi
+            
+            security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+            security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+            
+            # Import certificate
+            security import "$CERT_PATH" -P "${{ inputs.sign-certificate-password }}" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+            security list-keychain -d user -s "$KEYCHAIN_PATH"
+            
+            echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          fi
+          
+          # Handle certificate file path
+          if [[ -n "${{ inputs.sign-certificate-path }}" ]]; then
+            echo "CERT_PATH=${{ inputs.sign-certificate-path }}" >> $GITHUB_ENV
+          fi
+        fi
+        
+        # Certificate setup for Windows
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          if [[ -n "${{ inputs.sign-certificate-base64 }}" ]]; then
+            CERT_PATH="$MY_RUNNER_TMP/signing_cert.p12"
+            echo "${{ inputs.sign-certificate-base64 }}" | base64 -d > "$CERT_PATH"
+            echo "CERT_PATH=$CERT_PATH" >> $GITHUB_ENV
+          fi
+        fi
+        
+        echo "Certificate setup completed for $RUNNER_OS"
     - id: tool4d
       uses: 4d/tool4d-action@v3.1
       env:
@@ -114,8 +179,12 @@ runs:
           "actions":"${{ inputs.actions }}",
           "outputDirectory":"${{ inputs.output-directory }}",
           "signCertificate":"${{ inputs.sign-certificate }}",
+          "signCertificatePath":"${{ env.CERT_PATH }}",
+          "signCertificatePassword":"${{ inputs.sign-certificate-password }}",
+          "signIdentity":"${{ inputs.sign-identity }}",
           "signFiles":"${{ inputs.sign-files }}",
           "entitlementsFile":"${{ inputs.entitlements-file }}",
+          "keychainPath":"${{ env.KEYCHAIN_PATH }}",
           "archiveName":"${{ inputs.archive-name }}",
           "beforeBuild":"${{ inputs.before-build }}",
           "afterBuild":"${{ inputs.after-build }}",
@@ -123,3 +192,22 @@ runs:
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"
+        
+    - id: cleanup
+      name: Cleanup certificates
+      if: always()
+      shell: bash
+      run: |
+        # Cleanup macOS keychain
+        if [[ "$RUNNER_OS" == "macOS" && -n "${{ env.KEYCHAIN_PATH }}" ]]; then
+          echo "Cleaning up keychain: ${{ env.KEYCHAIN_PATH }}"
+          security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true
+        fi
+        
+        # Cleanup certificate files
+        if [[ -n "${{ env.CERT_PATH }}" ]]; then
+          echo "Cleaning up certificate file: ${{ env.CERT_PATH }}"
+          rm -f "${{ env.CERT_PATH }}" || true
+        fi
+        
+        echo "Certificate cleanup completed"

@@ -10,3 +10,4 @@ tool4d.*
 build/*
 Project/Trash/*
 Libraries/lib4d-arm64.dylib
+error_flag
