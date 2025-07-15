@@ -154,6 +154,12 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 	
 	
 	// MARK:- artefact
+	
+Function isRelease() : Boolean
+	var $env : Object
+	$env:=This:C1470._parseEnv()
+	return (String:C10($env["GITHUB_EVENT_NAME"])="release")
+	
 Function postArtefactToRelease($artefact : 4D:C1709.File)->$result : Object
 	var $env : Object
 	$env:=This:C1470._parseEnv()

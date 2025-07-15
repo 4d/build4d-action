@@ -133,7 +133,7 @@ Function _setup($config : Object)
 	End if 
 	
 	
-	// check actions
+	// MARK: check actions
 	If ((Value type:C1509(This:C1470.config.actions)=Is text:K8:3) && (Length:C16(This:C1470.config.actions)>0))
 		//%W-533.1
 		If (This:C1470.config.actions[[1]]="[")
@@ -149,19 +149,11 @@ Function _setup($config : Object)
 	End if 
 	
 	If (This:C1470.config.actions.length=0)
-		This:C1470.config.actions.push("build")
-	End if 
-	
-	If ((This:C1470.config.outputDirectory#Null:C1517) && (Value type:C1509(This:C1470.config.outputDirectory)=Is text:K8:3) && (Length:C16(This:C1470.config.outputDirectory)=0))
-		This:C1470.config.outputDirectory:=Null:C1517
-	End if 
-	
-	If (This:C1470.config.actions.includes("pack") && (This:C1470.config.outputDirectory=Null:C1517))
-		
-		// if pack action, we need an output dir
-		This:C1470.config.outputDirectory:=This:C1470._baseFolder().folder("build")  // .build?
-		Storage:C1525.github.debug("Set default output directory to "+This:C1470.config.outputDirectory.path)
-		
+		If (Storage:C1525.github.isRelease())
+			This:C1470.config.actions.push("release")
+		Else 
+			This:C1470.config.actions.push("build")
+		End if 
 	End if 
 	
 	If (This:C1470.config.actions.includes("pack") && Not:C34(This:C1470.config.actions.includes("build")))
@@ -173,6 +165,37 @@ Function _setup($config : Object)
 	
 	If (This:C1470.config.outputUseContents=Null:C1517)
 		This:C1470.config.outputUseContents:=This:C1470.config.actions.includes("pack")
+	End if 
+	
+	If (Not:C34(This:C1470.config.actions.includes("sign")) && (This:C1470.config.signCertificate#Null:C1517) && (Length:C16(String:C10(This:C1470.config.signCertificate))>0))
+		This:C1470.config.actions.push("sign")
+		Storage:C1525.github.debug("Action sign added, because sign certificate defined")
+	End if 
+	
+	If ((Value type:C1509(This:C1470.config.signFiles)=Is text:K8:3) && (Length:C16(This:C1470.config.signFiles)>0))
+		//%W-533.1
+		If (This:C1470.config.signFiles[[1]]="[")
+			//%W+533.1
+			This:C1470.config.signFiles:=JSON Parse:C1218(This:C1470.config.signFiles)
+		Else 
+			This:C1470.config.signFiles:=Split string:C1554(String:C10(This:C1470.config.signFiles); ",")
+		End if 
+	End if 
+	
+	This:C1470.checkOuputDirectory()
+	
+Function checkOuputDirectory()
+	
+	If ((This:C1470.config.outputDirectory#Null:C1517) && (Value type:C1509(This:C1470.config.outputDirectory)=Is text:K8:3) && (Length:C16(This:C1470.config.outputDirectory)=0))
+		This:C1470.config.outputDirectory:=Null:C1517
+	End if 
+	
+	If (This:C1470.config.actions.includes("pack") && (This:C1470.config.outputDirectory=Null:C1517))
+		
+		// if pack action, we need an output dir
+		This:C1470.config.outputDirectory:=This:C1470._baseFolder().folder("build")  // .build?
+		Storage:C1525.github.debug("Set default output directory to "+This:C1470.config.outputDirectory.path)
+		
 	End if 
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
@@ -194,21 +217,22 @@ Function _setup($config : Object)
 		
 	End if 
 	
-	If (Not:C34(This:C1470.config.actions.includes("sign")) && (This:C1470.config.signCertificate#Null:C1517) && (Length:C16(String:C10(This:C1470.config.signCertificate))>0))
-		This:C1470.config.actions.push("sign")
-		Storage:C1525.github.debug("Action sign added, because sign certificate defined")
-	End if 
 	
-	If ((Value type:C1509(This:C1470.config.signFiles)=Is text:K8:3) && (Length:C16(This:C1470.config.signFiles)>0))
-		//%W-533.1
-		If (This:C1470.config.signFiles[[1]]="[")
-			//%W+533.1
-			This:C1470.config.signFiles:=JSON Parse:C1218(This:C1470.config.signFiles)
-		Else 
-			This:C1470.config.signFiles:=Split string:C1554(String:C10(This:C1470.config.signFiles); ",")
-		End if 
-	End if 
+	// MARK:- clean
+Function clean()->$status : Object
+	$status:=New object:C1471("success"; True:C214)
 	
+	This:C1470.checkOuputDirectory()
+	
+	If (This:C1470.config.outputDirectory#Null:C1517)
+		
+		This:C1470.config.outputDirectory.delete(Delete with contents:K24:24)
+		
+	Else 
+		
+		// TODO: clean build data on current basse
+		
+	End if 
 	
 	// MARK:- build
 Function build()->$status : Object
@@ -1024,7 +1048,7 @@ Function run() : Object
 Function _checkActions($actions : Collection) : Collection
 	
 	var $releaseActions : Collection
-	$releaseActions:=New collection:C1472("clean"; "build"; "sign"; "pack"; "archive")
+	$releaseActions:=New collection:C1472("clean"; "build"; "pack"; "sign"; "archive")
 	If ($actions.includes("release"))
 		return $releaseActions
 	End if 
