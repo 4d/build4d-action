@@ -9,7 +9,6 @@ inputs:
   project:
     description: 'Project to build'
     required: false
-
   targets:
     description: "If not defined, only a check syntax is done. Possible values: \"x86_64_generic\", \"arm64_macOS_lib\" if macOS. (some shortcut all, current, available)"
     required: false
@@ -22,51 +21,50 @@ inputs:
     description: "true to generate symbol information in the .symbols returned object"
     required: false
     default: "False"
-  generate-typing-methods:   
+  generate-typing-methods:
     description: "\"reset\" or \"append\" to generate typing methods.\nIf value is \"append\", existing variable declarations won't be modified (compiler window behavior).\nIf value is \"reset\" existing variable declarations are removed beforehand."
     required: false
     default: ""
-  ignore-warnings:   
+  ignore-warnings:
     description: "Never display compilation warnings."
     required: false
     default: "False"
-  fail-on-warning:   
+  fail-on-warning:
     description: "Failed on warnings."
     required: false
     default: "False"
-  actions:   
+  actions:
     description: "One or more among \"build\",\"pack\",\"sign\",\"archive\""
     required: false
     default: ""
-  output-directory:   
+  output-directory:
     description: "Directory to output build. Default is \"build\""
     required: false
     default: ""
-  sign-certificate:   
+  sign-certificate:
     description: "Name of the certificate to use. Mandatory to sign on macOS."
     required: false
     default: ""
-  sign-files:   
+  sign-files:
     description: "List of file paths to sign too relative to base folder"
     required: false
     default: ""
-  entitlements-file:   
+  entitlements-file:
     description: "Path of entitlement files to sign (if not defined use default one)"
     required: false
     default: ""
-  archive-name:   
+  archive-name:
     description: "Define name of the archive produced with action 'archive'. (Default is 4d project name with space replaced by -)"
     required: false
     default: ""
-  before-build:   
+  before-build:
     description: "Script or binary to execute before the build action starts. Can be a shell command, script path, or executable binary."
     required: false
     default: ""
-  after-build:   
+  after-build:
     description: "Script or binary to execute after the build action completes. Can be a shell command, script path, or executable binary."
     required: false
     default: ""
-
   product-line:
     description: 'tool4d product line'
     required: false
@@ -82,6 +80,15 @@ inputs:
   token:
     description: 'if needed a token to download'
     required: false
+
+outputs:
+  tool4d:
+    description: 'Path to the tool4d executable'
+    value: ${{ steps.tool4d.outputs.tool4d }}
+  project:
+    description: 'Path to the 4D project that was processed'
+    value: ${{ steps.tool4d.outputs.project }}
+
 runs:
   using: 'composite'
   steps:
@@ -101,7 +108,7 @@ runs:
         echo "TMP=$MY_RUNNER_TMP"
         echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
     - id: tool4d
-      uses: 4d/tool4d-action@v3.1
+      uses: 4d/tool4d-action@v3.2
       env:
         GITHUB_THIS_ACTION_PATH: ${{ github.action_path }}
       with:
