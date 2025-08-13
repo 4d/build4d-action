@@ -1068,6 +1068,15 @@ Function _checkActions($actions : Collection) : Collection
 	
 	return $sortedAction
 	
+Function _Get4DPath() : Text
+	Case of 
+		: (Is macOS:C1572)
+			return Folder:C1567(Application file:C491; fk platform path:K87:2).folder("Contents/MacOS").files().first().path
+		Else 
+			// TODO: to check on other OS
+			return Application file:C491
+	End case 
+	
 Function _executeHook($label : Text)
 	
 	var $command : Text
@@ -1094,6 +1103,9 @@ Function _executeHook($label : Text)
 	$options.variables.BUILD_PROJECT_PATH:=This:C1470.config.file#Null:C1517 ? String:C10(This:C1470.config.file.path) : ""
 	$options.variables.BUILD_PROJECT_NAME:=This:C1470.config.file#Null:C1517 ? This:C1470.config.file.name : ""
 	$options.variables.BUILD_STEP:=String:C10($label)
+	
+	$options.variables.FOURD_PATH:=This:C1470._Get4DPath()
+	$options.variables.TOOL4D_PATH:=$options.variables.FOURD_PATH  // even if not tool we pass, must work
 	
 	// Execute the command
 	$worker:=4D:C1709.SystemWorker.new($command; $options)
