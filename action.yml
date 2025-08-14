@@ -65,6 +65,10 @@ inputs:
     description: "Script or binary to execute after the build action completes. Can be a shell command, script path, or executable binary."
     required: false
     default: ""
+  always-run-after-build:
+    description: "Whether to run the after-build hook even if the build fails. Set to 'true' to always execute after-build regardless of build success/failure."
+    required: false
+    default: "false"
   product-line:
     description: 'tool4d product line'
     required: false
@@ -126,6 +130,7 @@ runs:
           "archiveName":"${{ inputs.archive-name }}",
           "beforeBuild":"${{ inputs.before-build }}",
           "afterBuild":"${{ inputs.after-build }}",
+          "alwaysRunAfterBuild":"${{ inputs.always-run-after-build }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

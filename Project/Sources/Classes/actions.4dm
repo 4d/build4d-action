@@ -351,12 +351,12 @@ Function build()->$status : Object
 			Storage:C1525.github.notice("✅ Build success")
 			Storage:C1525.github.addToSummary("## ✅ Build success")
 			
-			// Execute after-build script/binary if defined
-			If ((Length:C16(String:C10(This:C1470.config.afterBuild))>0) && ($status.success))
-				This:C1470._executeHook("afterBuild")
-			End if 
-			
 	End case 
+	
+	// Execute after-build script/binary if defined
+	If ((Length:C16(String:C10(This:C1470.config.afterBuild))>0)) &&  (($status.success) || (Bool:C1537(This:C1470.config.alwaysRunAfterBuild)))
+		This:C1470._executeHook("afterBuild")
+	End if 
 	
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
