@@ -354,7 +354,7 @@ Function build()->$status : Object
 	End case 
 	
 	// Execute after-build script/binary if defined
-	If ((Length:C16(String:C10(This:C1470.config.afterBuild))>0)) &&  (($status.success) || (Bool:C1537(This:C1470.config.alwaysRunAfterBuild)))
+	If ((Length:C16(String:C10(This:C1470.config.afterBuild))>0)) && (($status.success) || (Bool:C1537(This:C1470.config.alwaysRunAfterBuild)))
 		This:C1470._executeHook("afterBuild")
 	End if 
 	
@@ -1111,6 +1111,12 @@ Function _executeHook($label : Text)
 	$worker:=4D:C1709.SystemWorker.new($command; $options)
 	
 	// Wait for completion and get results
+	If ($worker=Null:C1517)
+		Storage:C1525.github.error("❌ Command cannot be launched.")
+		Storage:C1525.github.debug("Command used "+$command)
+		return 
+	End if 
+	
 	$worker.wait()
 	
 	// Report results
