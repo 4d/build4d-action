@@ -846,10 +846,17 @@ Function sign() : Object
 		Storage:C1525.github.info($worker.response)
 	End if 
 	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
-		Storage:C1525.github.warning($worker.responseError)
+		Storage:C1525.github.warning($worker.responseError)  // we do not know if warning or error so warning
 	End if 
 	
 	$statusFile:=New object:C1471("success"; $worker.exitCode=0; "errors"; $worker.errors; "exitCode"; $worker.exitCode)
+	
+	If (Not:C34($statusFile.success))
+		
+		Storage:C1525.github.error("Failed to sign")  // error will set exit status code
+		
+	End if 
+	
 	Storage:C1525.github.debug(JSON Stringify:C1217($statusFile))
 	
 	This:C1470._mergeResult($status; $statusFile)
