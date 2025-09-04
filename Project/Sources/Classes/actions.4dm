@@ -1,4 +1,5 @@
 // property config : Object
+// property _envCache : Object
 
 Class constructor($config : Object)
 	This:C1470._setup($config)
@@ -717,11 +718,12 @@ Function _cleanProjectSources($projectFolder : 4D:C1709.Folder)
 		
 	End for each 
 	
-	
-	
-	
-	// MARK:- sign
-	
+Function _getEnv() : Object
+	If (This:C1470._envCache=Null:C1517)
+		This:C1470._envCache:=GetEnv
+	End if 
+	return This:C1470._envCache
+
 Function _baseFolder() : 4D:C1709.Folder
 	If (This:C1470.config.file=Null:C1517)
 		return Null:C1517
@@ -731,6 +733,32 @@ Function _baseFolder() : 4D:C1709.Folder
 	End if 
 	return This:C1470.config.file.parent.parent
 	
+	
+	// MARK:- sign
+	
+Function _unlockKeychain($name : Text; $path : Text; $password : Text) : Object
+	If (Length:C16($password)=0)
+		return New object:C1471("success"; True:C214)  // Skip if no password
+	End if 
+	
+	Storage:C1525.github.notice("Unlocking "+$name+" keychain")
+	var $unlockCmd : Text
+	$unlockCmd:="security unlock-keychain -p \""+$password+"\" \""+$path+"\""
+	Storage:C1525.github.debug("Executing "+$name+" keychain unlock command")
+	
+	var $keychainWorker : 4D:C1709.SystemWorker
+	$keychainWorker:=4D:C1709.SystemWorker.new($unlockCmd).wait()
+	
+	If ($keychainWorker.exitCode#0)
+		var $errorMsg : Text
+		$errorMsg:="Failed to unlock "+$name+" keychain: "+String:C10($keychainWorker.responseError)
+		Storage:C1525.github.error($errorMsg)
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472($errorMsg))
+	Else 
+		Storage:C1525.github.info($name+" keychain unlocked successfully")
+		return New object:C1471("success"; True:C214)
+	End if 
+
 Function sign() : Object
 	
 	var $baseFolder : 4D:C1709.Folder
@@ -739,6 +767,40 @@ Function sign() : Object
 	If (Not:C34(Is macOS:C1572))
 		Storage:C1525.github.warning("Signature ignored on this OS")
 		return New object:C1471("success"; True:C214)
+	End if 
+	
+	// Check if keychain passwords are set and unlock keychains
+	var $env : Object
+	$env:=This:C1470._getEnv()
+	
+	var $keychainResult : Object
+	
+	// Support for login keychain
+	If ($env["LOGIN_KEYCHAIN_PASSWORD"]#Null:C1517)
+		$keychainResult:=This:C1470._unlockKeychain("login"; "~/Library/Keychains/login.keychain-db"; String:C10($env["LOGIN_KEYCHAIN_PASSWORD"]))
+		If (Not:C34($keychainResult.success))
+			return $keychainResult
+		End if 
+	End if 
+	
+	// Support for system keychain
+	If ($env["SYSTEM_KEYCHAIN_PASSWORD"]#Null:C1517)
+		$keychainResult:=This:C1470._unlockKeychain("system"; "/Library/Keychains/System.keychain"; String:C10($env["SYSTEM_KEYCHAIN_PASSWORD"]))
+		If (Not:C34($keychainResult.success))
+			return $keychainResult
+		End if 
+	End if 
+	
+	// Support for custom keychain path
+	If (($env["KEYCHAIN_PATH"]#Null:C1517) && ($env["KEYCHAIN_PASSWORD"]#Null:C1517))
+		var $customKeychainPath : Text
+		$customKeychainPath:=String:C10($env["KEYCHAIN_PATH"])
+		If (Length:C16($customKeychainPath)>0)
+			$keychainResult:=This:C1470._unlockKeychain("custom ("+$customKeychainPath+")"; $customKeychainPath; String:C10($env["KEYCHAIN_PASSWORD"]))
+			If (Not:C34($keychainResult.success))
+				return $keychainResult
+			End if 
+		End if 
 	End if 
 	
 	var $signScriptFile : 4D:C1709.File
@@ -1105,7 +1167,7 @@ Function _executeHook($label : Text)
 	End if 
 	
 	// Add environment variables
-	$options.variables:=GetEnv
+	$options.variables:=This:C1470._getEnv()
 	$options.variables.BUILD_OUTPUT_DIR:=This:C1470.config.outputDirectory#Null:C1517 ? String:C10(This:C1470.config.outputDirectory.path) : ""
 	$options.variables.BUILD_PROJECT_PATH:=This:C1470.config.file#Null:C1517 ? String:C10(This:C1470.config.file.path) : ""
 	$options.variables.BUILD_PROJECT_NAME:=This:C1470.config.file#Null:C1517 ? This:C1470.config.file.name : ""
