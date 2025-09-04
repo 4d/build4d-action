@@ -821,7 +821,7 @@ Function sign() : Object
 	
 	// Support for login keychain
 	If ($env["LOGIN_KEYCHAIN_PASSWORD"]#Null:C1517)
-		$keychainResult:=This:C1470._unlockKeychain("login"; "~/Library/Keychains/login.keychain-db"; String:C10($env["LOGIN_KEYCHAIN_PASSWORD"]))
+		$keychainResult:=This:C1470._unlockKeychain("login"; Folder(fk home folder).path + "Library/Keychains/login.keychain-db"; String:C10($env["LOGIN_KEYCHAIN_PASSWORD"]))
 		If (Not:C34($keychainResult.success))
 			return $keychainResult
 		End if 
