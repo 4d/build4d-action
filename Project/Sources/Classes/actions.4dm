@@ -164,13 +164,15 @@ Function _setup($config : Object)
 		
 	End if 
 	
-	If (This:C1470.config.outputUseContents=Null:C1517)
-		This:C1470.config.outputUseContents:=This:C1470.config.actions.includes("pack")
-	End if 
-	
 	If (Not:C34(This:C1470.config.actions.includes("sign")) && (This:C1470.config.signCertificate#Null:C1517) && (Length:C16(String:C10(This:C1470.config.signCertificate))>0))
 		This:C1470.config.actions.push("sign")
 		Storage:C1525.github.debug("Action sign added, because sign certificate defined")
+	End if 
+	
+	This:C1470.config.actions:=This:C1470._checkActions(This:C1470.config.actions)
+	
+	If (This:C1470.config.outputUseContents=Null:C1517)
+		This:C1470.config.outputUseContents:=This:C1470.config.actions.includes("pack")
 	End if 
 	
 	If ((Value type:C1509(This:C1470.config.signFiles)=Is text:K8:3) && (Length:C16(This:C1470.config.signFiles)>0))
@@ -821,7 +823,7 @@ Function sign() : Object
 	
 	// Support for login keychain
 	If ($env["LOGIN_KEYCHAIN_PASSWORD"]#Null:C1517)
-		$keychainResult:=This:C1470._unlockKeychain("login"; Folder(fk home folder).path + "Library/Keychains/login.keychain-db"; String:C10($env["LOGIN_KEYCHAIN_PASSWORD"]))
+		$keychainResult:=This:C1470._unlockKeychain("login"; Folder:C1567(fk home folder:K87:24).path+"Library/Keychains/login.keychain-db"; String:C10($env["LOGIN_KEYCHAIN_PASSWORD"]))
 		If (Not:C34($keychainResult.success))
 			return $keychainResult
 		End if 
