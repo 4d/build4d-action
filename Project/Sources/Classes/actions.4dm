@@ -723,7 +723,7 @@ Function _getEnv() : Object
 		This:C1470._envCache:=GetEnv
 	End if 
 	return This:C1470._envCache
-
+	
 Function _baseFolder() : 4D:C1709.Folder
 	If (This:C1470.config.file=Null:C1517)
 		return Null:C1517
@@ -742,6 +742,50 @@ Function _unlockKeychain($name : Text; $path : Text; $password : Text) : Object
 	End if 
 	
 	Storage:C1525.github.notice("Unlocking "+$name+" keychain")
+	
+	// First, add custom keychain to search list if it's not a standard keychain
+	If (Position:C15("custom"; $name)=1)
+		Storage:C1525.github.debug("Checking if custom keychain needs to be added to search list")
+		
+		// Get current keychain list
+		var $listWorker : 4D:C1709.SystemWorker
+		$listWorker:=4D:C1709.SystemWorker.new("security list-keychains").wait()
+		
+		If ($listWorker.exitCode=0)
+			var $currentKeychains : Text
+			$currentKeychains:=$listWorker.response
+			
+			// Check if custom keychain is already in the list
+			If (Position:C15($path; $currentKeychains)>0)
+				Storage:C1525.github.info($name+" keychain already in search list")
+			Else 
+				Storage:C1525.github.debug("Adding custom keychain to search list")
+				
+				// Clean up the output for the command
+				var $cleanKeychains : Text
+				$cleanKeychains:=Replace string:C233($currentKeychains; "\""; "")  // Remove quotes
+				$cleanKeychains:=Replace string:C233($cleanKeychains; Char:C90(Line feed:K15:40); " ")  // Replace newlines with spaces
+				
+				// Add custom keychain to the front of the list
+				var $addKeychainCmd : Text
+				$addKeychainCmd:="security list-keychains -s \""+$path+"\" "+$cleanKeychains
+				Storage:C1525.github.debug("Keychain command: "+$addKeychainCmd)
+				
+				var $addWorker : 4D:C1709.SystemWorker
+				$addWorker:=4D:C1709.SystemWorker.new($addKeychainCmd).wait()
+				
+				If ($addWorker.exitCode#0)
+					Storage:C1525.github.warning("Failed to add "+$name+" keychain to search list: "+String:C10($addWorker.responseError))
+				Else 
+					Storage:C1525.github.info($name+" keychain added to search list")
+				End if 
+			End if 
+		Else 
+			Storage:C1525.github.warning("Could not get current keychain list: "+String:C10($listWorker.responseError))
+		End if 
+	End if 
+	
+	// Then unlock the keychain
 	var $unlockCmd : Text
 	$unlockCmd:="security unlock-keychain -p \""+$password+"\" \""+$path+"\""
 	Storage:C1525.github.debug("Executing "+$name+" keychain unlock command")
@@ -758,7 +802,7 @@ Function _unlockKeychain($name : Text; $path : Text; $password : Text) : Object
 		Storage:C1525.github.info($name+" keychain unlocked successfully")
 		return New object:C1471("success"; True:C214)
 	End if 
-
+	
 Function sign() : Object
 	
 	var $baseFolder : 4D:C1709.Folder
@@ -801,6 +845,21 @@ Function sign() : Object
 				return $keychainResult
 			End if 
 		End if 
+	End if 
+	
+	// Debug: Show keychain search list and available certificates
+	If ($env["KEYCHAIN_DEBUG"]#Null:C1517)
+		var $debugWorker : 4D:C1709.SystemWorker
+		Storage:C1525.github.debug("=== Keychain Debug Information ===")
+		
+		// Show keychain search list
+		$debugWorker:=4D:C1709.SystemWorker.new("security list-keychains").wait()
+		Storage:C1525.github.debug("Keychain search list: "+$debugWorker.response)
+		
+		// Show available signing certificates
+		$debugWorker:=4D:C1709.SystemWorker.new("security find-identity -v -p codesigning").wait()
+		Storage:C1525.github.debug("Available signing certificates: "+$debugWorker.response)
+		Storage:C1525.github.debug("=== End Debug Information ===")
 	End if 
 	
 	var $signScriptFile : 4D:C1709.File
