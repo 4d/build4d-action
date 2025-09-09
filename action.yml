@@ -69,6 +69,10 @@ inputs:
     description: "Whether to run the after-build hook even if the build fails. Set to 'true' to always execute after-build regardless of build success/failure."
     required: false
     default: "false"
+  strip-tests:
+    description: "Remove test methods (test_*.4dm) from the project before compilation. Set to 'true' to remove test methods."
+    required: false
+    default: "false"
   product-line:
     description: 'tool4d product line'
     required: false
@@ -131,6 +135,7 @@ runs:
           "beforeBuild":"${{ inputs.before-build }}",
           "afterBuild":"${{ inputs.after-build }}",
           "alwaysRunAfterBuild":"${{ inputs.always-run-after-build }}",
+          "stripTests":"${{ inputs.strip-tests }}",
           "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main

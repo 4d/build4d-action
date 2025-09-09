@@ -30,6 +30,7 @@ Function _setup($config : Object)
 	
 	This:C1470.config.ignoreWarnings:=isTruthly(This:C1470.config.ignoreWarnings)
 	This:C1470.config.failOnWarning:=isTruthly(This:C1470.config.failOnWarning)
+	This:C1470.config.stripTests:=isTruthly(This:C1470.config.stripTests)
 	
 	
 	// check "workingDirectory"
@@ -315,6 +316,9 @@ Function build()->$status : Object
 		
 		This:C1470.config.file:=$outputDir.folder("Project").file(This:C1470.config.file.fullName)
 		
+		// Strip test methods if requested (whether building to output directory or in place)
+		
+		This:C1470._stripTestMethods($outputDir.folder("Project"))
 	End if 
 	
 	If (This:C1470.config.file=Null:C1517)  // check it or the current base will be compiled instead
@@ -418,7 +422,7 @@ Function _fCheckTargetName($object : Object)
 		: (Not:C34(Value type:C1509($object.value)=Is text:K8:3))
 			$object.result:=Null:C1517
 		: ($object.value="current")
-			$object.result:=(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
+			$object.result:=(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
 		: (($object.value="x86_64") || ($object.value="x86-64") || ($object.value="x64") || ($object.value="AMD64") || ($object.value="Intel 64"))
 			$object.result:="x86_64_generic"
 		: ($object.value="arm64")
@@ -595,7 +599,7 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	End if 
 	
 	var $options : Object
-	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
 	
 	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
 	
@@ -622,6 +626,37 @@ Function _not4DName($text : Text) : Text
 		$text:=Replace string:C233($text; $to; "")
 	End for each 
 	return $text
+	
+Function _stripTestMethods($projectFolder : 4D:C1709.Folder)
+	
+	If (Not:C34(Bool:C1537(This:C1470.config.stripTests)))
+		return 
+	End if 
+	
+	Storage:C1525.github.info("Stripping test methods (test_*.4dm) from project")
+	
+	var $sourcesFolder : 4D:C1709.Folder
+	$sourcesFolder:=$projectFolder.folder("Sources")
+	
+	If (Not:C34($sourcesFolder.exists))
+		Storage:C1525.github.debug("Sources folder does not exist, nothing to strip")
+		return 
+	End if 
+	
+	var $testFiles : Collection
+	$testFiles:=$sourcesFolder.files(fk recursive:K87:7).query("extension=.4dm AND fullName=test_@")
+	
+	Storage:C1525.github.debug("Found "+String:C10($testFiles.length)+" test method files to remove")
+	
+	var $file : 4D:C1709.File
+	For each ($file; $testFiles)
+		Storage:C1525.github.debug("Removing test method: "+$file.path)
+		$file.delete()
+	End for each 
+	
+	If ($testFiles.length>0)
+		Storage:C1525.github.info("Successfully removed "+String:C10($testFiles.length)+" test method files")
+	End if 
 	
 	// MARK:- pack
 	
