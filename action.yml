@@ -88,10 +88,6 @@ inputs:
   token:
     description: 'if needed a token to download'
     required: false
-  tool4d-action-version:
-    description: 'Version (tag) of the 4d/tool4d-action to use in the composite action'
-    required: false
-    default: "v3.4"
 
 outputs:
   tool4d:
@@ -120,7 +116,7 @@ runs:
         echo "TMP=$MY_RUNNER_TMP"
         echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
     - id: tool4d
-      uses: 4d/tool4d-action@${{ inputs.tool4d-action-version }}
+      uses: 4d/tool4d-action@v3.4
       env:
         GITHUB_THIS_ACTION_PATH: ${{ github.action_path }}
       with:
