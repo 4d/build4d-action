@@ -416,13 +416,14 @@ Function _checkCompilationOptions($options : Variant) : Object
 		End if 
 	End if 
 	
-	If ((This:C1470.config.outputDirectory#Null:C1517) && ($options.targets=Null:C1517))  // if an output we want to build something
+	If ((This:C1470.config.outputDirectory#Null:C1517) && (($options.targets=Null:C1517) || ((Value type:C1509($options.targets)=Is text:K8:3) && (Length:C16($options.targets)=0))))  // if an output we want to build something
 		$options.targets:=Is Windows:C1573 ? "current" : "all"
 	End if 
 	
 	If ((Value type:C1509($options.targets)=Is text:K8:3) && (Length:C16($options.targets)>0))
 		$options.targets:=Split string:C1554($options.targets; ","; sk ignore empty strings:K86:1)
 	End if 
+	
 	If (Value type:C1509($options.targets)=Is collection:K8:32)
 		$options.targets:=$options.targets.flatMap(This:C1470._fCheckTargetName).filter(Formula:C1597($1.value#Null:C1517))
 	End if 
