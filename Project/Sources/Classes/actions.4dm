@@ -228,7 +228,7 @@ Function clean()->$status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
 	Storage:C1525.github.debug("🧹 Starting clean process")
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	
 	This:C1470.checkOuputDirectory()
 	
@@ -247,7 +247,7 @@ Function build()->$status : Object
 	
 	Storage:C1525.github.debug("🔨 Starting build process")
 	Storage:C1525.github.debug("Project file: "+String:C10(This:C1470.config.path))
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	Storage:C1525.github.debug("Strip tests: "+String:C10(This:C1470.config.stripTests))
 	
 	// Execute before-build script/binary if defined
@@ -683,7 +683,7 @@ Function pack() : Object
 	$status:=New object:C1471("success"; True:C214)
 	
 	Storage:C1525.github.debug("📦 Starting pack process")
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	Storage:C1525.github.debug("Clean sources: "+String:C10(This:C1470.config.cleanSources))
 	
 	If (This:C1470.config.outputDirectory=Null:C1517)
