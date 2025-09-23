@@ -35,12 +35,13 @@ Function _setup($config : Object)
 	
 	// check "workingDirectory"
 	If (Length:C16(String:C10(This:C1470.config.workingDirectory))>0)
-		
-		Storage:C1525.github.debug("workingDirectory="+String:C10(This:C1470.config.workingDirectory))
+
+		Storage:C1525.github.debug("📁 Working directory provided: "+String:C10(This:C1470.config.workingDirectory))
 		
 	Else 
 		// CLEAN: see env var ? any means using 4D?
 		
+		Storage:C1525.github.debug("📁 No working directory provided, attempting auto-detection")
 		If (isDev)  // this base to test
 			If (Is Windows:C1573)
 				This:C1470.config.workingDirectory:=Folder:C1567(fk database folder:K87:14).platformPath
@@ -65,8 +66,8 @@ Function _setup($config : Object)
 			End if 
 			
 			This:C1470.config.path:=String:C10(This:C1470.config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
-			
-			Storage:C1525.github.debug("find project file "+This:C1470.config.path)
+
+			Storage:C1525.github.debug("🔍 Auto-discovered project file: "+This:C1470.config.path)
 			This:C1470.config.file:=File:C1566(This:C1470.config.path)
 			If (This:C1470.config.file#Null:C1517)
 				This:C1470.config.file:=File:C1566(This:C1470.config.file.platformPath; fk platform path:K87:2)  // unbox if needed
@@ -74,8 +75,8 @@ Function _setup($config : Object)
 		End if 
 		
 	Else 
-		
-		Storage:C1525.github.debug("config path "+This:C1470.config.path)
+
+		Storage:C1525.github.debug("🔗 Project path provided: "+This:C1470.config.path)
 		var $methodOnError : Text
 		$methodOnError:=Method called on error:C704()
 		ON ERR CALL:C155("noError")  // no Try (compatible with v20
@@ -226,6 +227,9 @@ Function checkOuputDirectory()
 Function clean()->$status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
+	Storage:C1525.github.debug("🧹 Starting clean process")
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	
 	This:C1470.checkOuputDirectory()
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
@@ -240,6 +244,11 @@ Function clean()->$status : Object
 	
 	// MARK:- build
 Function build()->$status : Object
+	
+	Storage:C1525.github.debug("🔨 Starting build process")
+	Storage:C1525.github.debug("Project file: "+String:C10(This:C1470.config.path))
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	Storage:C1525.github.debug("Strip tests: "+String:C10(This:C1470.config.stripTests))
 	
 	// Execute before-build script/binary if defined
 	If (Length:C16(String:C10(This:C1470.config.beforeBuild))>0)
@@ -270,6 +279,10 @@ Function build()->$status : Object
 	End if 
 	
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217(This:C1470.config.options))
+	Storage:C1525.github.debug("📋 Compilation details:")
+	Storage:C1525.github.debug("  - Project file: "+String:C10(This:C1470.config.file.path))
+	Storage:C1525.github.debug("  - Options: "+JSON Stringify:C1217(This:C1470.config.options))
+	Storage:C1525.github.debug("  - Components: "+String:C10($temp4DZs.length)+" temporary components")
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
 		
@@ -331,8 +344,11 @@ Function build()->$status : Object
 		$status.success:=False:C215
 		return $status
 	End if 
-	
+
+	Storage:C1525.github.debug("compiling project file from '"+$This:C1470.config.file.path+"' with option "+JSON Stringify:C1217(This:C1470.config.options))
+	Storage:C1525.github.debug("⚙️ Calling Compile project command...")
 	$status:=Compile project:C1760(This:C1470.config.file; This:C1470.config.options)
+	Storage:C1525.github.debug("📊 Compilation result: success="+String:C10($status.success)+", errors="+String:C10($status.errors.length))
 	
 	For each ($dependencyFile; $temp4DZs)
 		$dependencyFile.delete()
@@ -495,6 +511,9 @@ Function _fillComponents()->$temp4DZs : Collection
 	var $componentsFolder : 4D:C1709.Folder
 	var $componentsFolders : Collection
 	$temp4DZs:=New collection:C1472
+	
+	Storage:C1525.github.debug("🔧 Filling components from Components folder")
+	
 	If (This:C1470.config.file=Null:C1517)
 		Storage:C1525.github.debug("No file passed to fill components")
 		return $temp4DZs
@@ -664,6 +683,10 @@ Function pack() : Object
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
+	Storage:C1525.github.debug("📦 Starting pack process")
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory))
+	Storage:C1525.github.debug("Clean sources: "+String:C10(This:C1470.config.cleanSources))
+	
 	If (This:C1470.config.outputDirectory=Null:C1517)
 		$status.success:=False:C215
 		Storage:C1525.github.error("Must have defined an output directory")
@@ -683,10 +706,13 @@ Function pack() : Object
 	$projectFolder:=This:C1470.config.file.parent
 	
 	If (This:C1470.config.cleanSources)
+		Storage:C1525.github.debug("🧹 Cleaning project sources before packing")
 		This:C1470._cleanProjectSources($projectFolder)
 	End if 
 	
+	Storage:C1525.github.debug("📋 Creating ZIP archive: "+$packFile.path)
 	$status:=ZIP Create archive:C1640($projectFolder; $packFile)
+	Storage:C1525.github.debug("📦 ZIP creation result: success="+String:C10($status.success))
 	
 	If ($status.success)
 		$projectFolder.delete(fk recursive:K87:7)
@@ -841,6 +867,10 @@ Function _unlockKeychain($name : Text; $path : Text; $password : Text) : Object
 	End if 
 	
 Function sign() : Object
+	
+	Storage:C1525.github.debug("🔐 Starting sign process")
+	Storage:C1525.github.debug("Sign certificate: "+String:C10(This:C1470.config.signCertificate))
+	Storage:C1525.github.debug("Sign files: "+String:C10(This:C1470.config.signFiles))
 	
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
@@ -1041,6 +1071,9 @@ Function archiveName() : Text
 	return Replace string:C233(This:C1470.config.file.name; " "; "-")+".zip"
 	
 Function archive() : Object
+	Storage:C1525.github.debug("📚 Starting archive process")
+	Storage:C1525.github.debug("Output use contents: "+String:C10(This:C1470.config.outputUseContents))
+	
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
 	
@@ -1167,22 +1200,25 @@ Function run() : Object
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
+	Storage:C1525.github.debug("🚀 Starting action execution with config: "+JSON Stringify:C1217(This:C1470.config; "*"))
+	Storage:C1525.github.debug("Actions to execute: "+This:C1470.config.actions.join(" → "))
+	
 	Case of 
 		: (Length:C16(String:C10(This:C1470.config.path))=0)
 			
-			Storage:C1525.github.error("no correct project file path provided")
+			Storage:C1525.github.error("❌ Path validation failed - no project file path")
 			$status.errors:=New collection:C1472("no correct project file path provided")
 			$status.success:=False:C215
 			
 		: (FileSafe(This:C1470.config.path)=Null:C1517)  // just because it failed with mixed / and \ TODO: clean path
 			
-			Storage:C1525.github.error("project file "+This:C1470.config.path+" cannot be parsed")
+			Storage:C1525.github.error("❌ File parsing failed for: "+This:C1470.config.path)
 			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" cannot be parsed")
 			$status.success:=False:C215
 			
 		: (Not:C34(FileSafe(This:C1470.config.path).exists))
 			
-			Storage:C1525.github.error("project file "+This:C1470.config.path+" do not exists")
+			Storage:C1525.github.error("❌ File existence check failed for: "+This:C1470.config.path)
 			$status.errors:=New collection:C1472("project file "+This:C1470.config.path+" do not exists")
 			$status.success:=False:C215
 			
@@ -1198,15 +1234,22 @@ Function run() : Object
 			For each ($action; This:C1470.config.actions) Until (Not:C34($status.success))
 				If ((OB Instance of:C1731(This:C1470[$action]; 4D:C1709.Function)) && (Position:C15("_"; $action)#1) && ($action#"run"))
 					Storage:C1525.github.notice("action "+$action)
+					Storage:C1525.github.debug("⚡ Executing action: "+$action)
 					$status[$action]:=This:C1470[$action].call(This:C1470)
+					Storage:C1525.github.debug("✅ Action "+$action+" completed with result: "+JSON Stringify:C1217($status[$action]))
 					$status.success:=$status.success & Bool:C1537($status[$action].success)
+					If (Not:C34($status.success))
+						Storage:C1525.github.debug("❌ Action "+$action+" failed, stopping execution chain")
+					End if 
 				Else 
-					Storage:C1525.github.error("Unknown action "+$action)
+					Storage:C1525.github.error("❌ Unknown action attempted: "+$action)
 					$status.success:=False:C215
 				End if 
 			End for each 
 			
 	End case 
+	
+	Storage:C1525.github.debug("🏁 Action execution completed. Final status: "+JSON Stringify:C1217($status))
 	
 	return $status
 	
