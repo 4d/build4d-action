@@ -35,7 +35,7 @@ Function _setup($config : Object)
 	
 	// check "workingDirectory"
 	If (Length:C16(String:C10(This:C1470.config.workingDirectory))>0)
-
+		
 		Storage:C1525.github.debug("📁 Working directory provided: "+String:C10(This:C1470.config.workingDirectory))
 		
 	Else 
@@ -66,7 +66,7 @@ Function _setup($config : Object)
 			End if 
 			
 			This:C1470.config.path:=String:C10(This:C1470.config.workingDirectoryFolder.folder("Project").files().filter(Formula:C1597($1.value.extension=".4DProject")).first().path)
-
+			
 			Storage:C1525.github.debug("🔍 Auto-discovered project file: "+This:C1470.config.path)
 			This:C1470.config.file:=File:C1566(This:C1470.config.path)
 			If (This:C1470.config.file#Null:C1517)
@@ -75,7 +75,7 @@ Function _setup($config : Object)
 		End if 
 		
 	Else 
-
+		
 		Storage:C1525.github.debug("🔗 Project path provided: "+This:C1470.config.path)
 		var $methodOnError : Text
 		$methodOnError:=Method called on error:C704()
@@ -344,9 +344,8 @@ Function build()->$status : Object
 		$status.success:=False:C215
 		return $status
 	End if 
-
-	Storage:C1525.github.debug("compiling project file from '"+$This:C1470.config.file.path+"' with option "+JSON Stringify:C1217(This:C1470.config.options))
-	Storage:C1525.github.debug("⚙️ Calling Compile project command...")
+	
+	Storage:C1525.github.debug("⚙️ Calling Compile project for '"+This:C1470.config.file.path+"' with option "+JSON Stringify:C1217(This:C1470.config.options)+"...")
 	$status:=Compile project:C1760(This:C1470.config.file; This:C1470.config.options)
 	Storage:C1525.github.debug("📊 Compilation result: success="+String:C10($status.success)+", errors="+String:C10($status.errors.length))
 	
@@ -1200,7 +1199,7 @@ Function run() : Object
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
-	Storage:C1525.github.debug("🚀 Starting action execution with config: "+JSON Stringify:C1217(This:C1470.config; "*"))
+	Storage:C1525.github.debug("🚀 Starting action execution with config: "+JSON Stringify:C1217(This:C1470.config; *))
 	Storage:C1525.github.debug("Actions to execute: "+This:C1470.config.actions.join(" → "))
 	
 	Case of 
