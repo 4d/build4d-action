@@ -228,11 +228,11 @@ Function clean()->$status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
 	Storage:C1525.github.debug("🧹 Starting clean process")
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	
 	This:C1470.checkOuputDirectory()
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
+		Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 		
 		This:C1470.config.outputDirectory.delete(Delete with contents:K24:24)
 		
@@ -245,10 +245,14 @@ Function clean()->$status : Object
 	// MARK:- build
 Function build()->$status : Object
 	
-	Storage:C1525.github.debug("🔨 Starting build process")
-	Storage:C1525.github.debug("Project file: "+String:C10(This:C1470.config.path))
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
-	Storage:C1525.github.debug("Strip tests: "+String:C10(This:C1470.config.stripTests))
+	If (Storage:C1525.github.isDebug)
+		Storage:C1525.github.debug("🔨 Starting build process")
+		Storage:C1525.github.debug("Project file: "+String:C10(This:C1470.config.path))
+		If (This:C1470.config.outputDirectory#Null:C1517)
+			Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
+			Storage:C1525.github.debug("Strip tests: "+String:C10(This:C1470.config.stripTests))
+		End if 
+	End if 
 	
 	// Execute before-build script/binary if defined
 	If (Length:C16(String:C10(This:C1470.config.beforeBuild))>0)
@@ -279,10 +283,12 @@ Function build()->$status : Object
 	End if 
 	
 	Storage:C1525.github.info("...launching compilation with opt: "+JSON Stringify:C1217(This:C1470.config.options))
-	Storage:C1525.github.debug("📋 Compilation details:")
-	Storage:C1525.github.debug("  - Project file: "+String:C10(This:C1470.config.file.path))
-	Storage:C1525.github.debug("  - Options: "+JSON Stringify:C1217(This:C1470.config.options))
-	Storage:C1525.github.debug("  - Components: "+String:C10($temp4DZs.length)+" temporary components")
+	If (Storage:C1525.github.isDebug)
+		Storage:C1525.github.debug("📋 Compilation details:")
+		Storage:C1525.github.debug("  - Project file: "+String:C10(This:C1470.config.file.path))
+		Storage:C1525.github.debug("  - Options: "+JSON Stringify:C1217(This:C1470.config.options))
+		Storage:C1525.github.debug("  - Components: "+String:C10($temp4DZs.length)+" temporary components")
+	End if 
 	
 	If (This:C1470.config.outputDirectory#Null:C1517)
 		
@@ -684,7 +690,6 @@ Function pack() : Object
 	$status:=New object:C1471("success"; True:C214)
 	
 	Storage:C1525.github.debug("📦 Starting pack process")
-	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	Storage:C1525.github.debug("Clean sources: "+String:C10(This:C1470.config.cleanSources))
 	
 	If (This:C1470.config.outputDirectory=Null:C1517)
@@ -693,6 +698,7 @@ Function pack() : Object
 		$status.errors:=New collection:C1472("Must have defined an output directory")
 		return $status
 	End if 
+	Storage:C1525.github.debug("Output directory: "+String:C10(This:C1470.config.outputDirectory.path))
 	
 	If (This:C1470.config.cleanSources=Null:C1517)
 		This:C1470.config.cleanSources:=True:C214
@@ -868,9 +874,11 @@ Function _unlockKeychain($name : Text; $path : Text; $password : Text) : Object
 	
 Function sign() : Object
 	
-	Storage:C1525.github.debug("🔐 Starting sign process")
-	Storage:C1525.github.debug("Sign certificate: "+String:C10(This:C1470.config.signCertificate))
-	Storage:C1525.github.debug("Sign files: "+String:C10(This:C1470.config.signFiles))
+	If (Storage:C1525.github.isDebug)
+		Storage:C1525.github.debug("🔐 Starting sign process")
+		Storage:C1525.github.debug("Sign certificate: "+String:C10(This:C1470.config.signCertificate))
+		Storage:C1525.github.debug("Sign files: "+String:C10(This:C1470.config.signFiles))
+	End if 
 	
 	var $baseFolder : 4D:C1709.Folder
 	$baseFolder:=This:C1470._baseFolder()
