@@ -361,13 +361,14 @@ Function build()->$status : Object
 	End for each 
 	
 	// clean user preferences (could be created by compile command)
-	var $folders : Collection
-	$folders:=$outputDir.folders()
-	$folders:=$folders.filter(Formula:C1597(Position:C15("userPreferences."; $1.value.fullName)=1))
-	For each ($tmpFolder; $folders)
-		Storage:C1525.github.debug("🧹 Clean user preferences folder "+$tmpFolder.path)
-		$tmpFolder.delete(fk recursive:K87:7)
-	End for each 
+	If ($outputDir#Null:C1517)
+		var $folders : Collection
+		$folders:=$outputDir.folders().filter(Formula:C1597(Position:C15("userPreferences."; $1.value.fullName)=1))
+		For each ($tmpFolder; $folders)
+			Storage:C1525.github.debug("🧹 Clean user preferences folder "+$tmpFolder.path)
+			$tmpFolder.delete(fk recursive:K87:7)
+		End for each 
+	End if 
 	
 	// report final status
 	Case of 
@@ -454,7 +455,7 @@ Function _fCheckTargetName($object : Object)
 		: (Not:C34(Value type:C1509($object.value)=Is text:K8:3))
 			$object.result:=Null:C1517
 		: ($object.value="current")
-			$object.result:=(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
+			$object.result:=(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
 		: (($object.value="x86_64") || ($object.value="x86-64") || ($object.value="x64") || ($object.value="AMD64") || ($object.value="Intel 64"))
 			$object.result:="x86_64_generic"
 		: ($object.value="arm64")
@@ -634,7 +635,7 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	End if 
 	
 	var $options : Object
-	$options:=New object:C1471("targets"; New collection:C1472(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
 	
 	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
 	
