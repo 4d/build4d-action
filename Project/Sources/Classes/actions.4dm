@@ -361,7 +361,10 @@ Function build()->$status : Object
 	End for each 
 	
 	// clean user preferences (could be created by compile command)
-	For each ($tmpFolder; $outputDir.folders().filter(Formula:C1597(Position:C15("userPreferences."; $1.value.fullName)=1)))
+	var $folders : Collection
+	$folders:=$outputDir.folders()
+	$folders:=$folders.filter(Formula:C1597(Position:C15("userPreferences."; $1.value.fullName)=1))
+	For each ($tmpFolder; $folders)
 		Storage:C1525.github.debug("🧹 Clean user preferences folder "+$tmpFolder.path)
 		$tmpFolder.delete(fk recursive:K87:7)
 	End for each 
