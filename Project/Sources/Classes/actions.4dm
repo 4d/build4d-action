@@ -355,8 +355,15 @@ Function build()->$status : Object
 	$status:=Compile project:C1760(This:C1470.config.file; This:C1470.config.options)
 	Storage:C1525.github.debug("📊 Compilation result: success="+String:C10($status.success)+", errors="+String:C10($status.errors.length))
 	
+	// clean temp 4dz
 	For each ($dependencyFile; $temp4DZs)
 		$dependencyFile.delete()
+	End for each 
+	
+	// clean user preferences (could be created by compile command)
+	For each ($tmpFolder; $outputDir.folders().filter(Formula:C1597(Position:C15("userPreferences."; $1.value.fullName)=1)))
+		Storage:C1525.github.debug("🧹 Clean user preferences folder "+$tmpFolder.path)
+		$tmpFolder.delete(fk recursive:K87:7)
 	End for each 
 	
 	// report final status
