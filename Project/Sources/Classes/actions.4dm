@@ -187,6 +187,14 @@ Function _setup($config : Object)
 		End if 
 	End if 
 	
+	// Parse signAsBundle option
+	Case of 
+		: (This:C1470.config.signAsBundle#Null:C1517)
+			This:C1470.config.signAsBundle:=isTruthly(This:C1470.config.signAsBundle)
+		Else 
+			This:C1470.config.signAsBundle:=False:C215
+	End case 
+	
 	This:C1470.checkOuputDirectory()
 	
 Function checkOuputDirectory()
@@ -889,6 +897,7 @@ Function sign() : Object
 		Storage:C1525.github.debug("🔐 Starting sign process")
 		Storage:C1525.github.debug("Sign certificate: "+String:C10(This:C1470.config.signCertificate))
 		Storage:C1525.github.debug("Sign files: "+String:C10(This:C1470.config.signFiles))
+		Storage:C1525.github.debug("Sign as bundle: "+String:C10(This:C1470.config.signAsBundle))
 	End if 
 	
 	var $baseFolder : 4D:C1709.Folder
@@ -949,11 +958,21 @@ Function sign() : Object
 	End if 
 	
 	var $signScriptFile : 4D:C1709.File
-	$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/SignApp.sh")
 	
-	If (Not:C34($signScriptFile.exists))
-		Storage:C1525.github.error("No SignApp.sh script")
-		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No SignApp.sh script"))
+	If (This:C1470.config.signAsBundle)
+		// Use app_sign_pack_notarize.sh from tool4D.app
+		$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/app_sign_pack_notarize.sh")
+		If (Not:C34($signScriptFile.exists))
+			Storage:C1525.github.error("No app_sign_pack_notarize.sh script found in tool4d.app")
+			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No app_sign_pack_notarize.sh script"))
+		End if 
+	Else 
+		// Use traditional SignApp.sh
+		$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/SignApp.sh")
+		If (Not:C34($signScriptFile.exists))
+			Storage:C1525.github.error("No SignApp.sh script")
+			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No SignApp.sh script"))
+		End if 
 	End if 
 	
 	var $entitlementsFile : 4D:C1709.File
@@ -996,15 +1015,24 @@ Function sign() : Object
 	End if 
 	
 	var $cmdPrefix; $cmdSuffix; $cmd : Text
-	$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
-	$cmdSuffix:=" \""+$entitlementsFile.path+"\""
+	
+	If (This:C1470.config.signAsBundle)
+		// app_sign_pack_notarize.sh sign <path> <entitlements_file> <certificate>
+		$cmdPrefix:="\""+$signScriptFile.path+"\" sign "
+		$cmdSuffix:=" \""+$entitlementsFile.path+"\" \""+$certificateName+"\""
+	Else 
+		// SignApp.sh <certificate> <path> <entitlements>
+		$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
+		$cmdSuffix:=" \""+$entitlementsFile.path+"\""
+	End if
 	
 	// Sign base
 	
 	var $status : Object
 	$status:=New object:C1471("success"; True:C214)
 	
-	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32))
+	// Skip individual file signing when using bundle signing
+	If ((This:C1470.config.signFiles#Null:C1517) && (Value type:C1509(This:C1470.config.signFiles)=Is collection:K8:32) && Not:C34(This:C1470.config.signAsBundle))
 		
 		Storage:C1525.github.notice("Sign defined files")
 		
@@ -1042,8 +1070,19 @@ Function sign() : Object
 		End for each 
 	End if 
 	
-	Storage:C1525.github.notice("Sign "+$baseFolder.path)
-	$cmd:=$cmdPrefix+"\""+$baseFolder.path+"\""+$cmdSuffix
+	// When signing as bundle, ensure we sign the .4dbase directory itself
+	var $pathToSign : Text
+	If (This:C1470.config.signAsBundle)
+		// Sign the .4dbase directory (bundle), not its contents
+		$pathToSign:=$baseFolder.path
+		Storage:C1525.github.notice("Sign bundle: "+$pathToSign)
+	Else 
+		// Traditional signing targets the base folder path
+		$pathToSign:=$baseFolder.path
+		Storage:C1525.github.notice("Sign "+$pathToSign)
+	End if 
+	
+	$cmd:=$cmdPrefix+"\""+$pathToSign+"\""+$cmdSuffix
 	
 	Storage:C1525.github.debug($cmd)
 	var $worker : 4D:C1709.SystemWorker

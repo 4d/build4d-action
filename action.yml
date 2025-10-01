@@ -49,6 +49,10 @@ inputs:
     description: "List of file paths to sign too relative to base folder"
     required: false
     default: ""
+  sign-as-bundle:
+    description: "Sign as bundle using app_sign_pack_notarize.sh from tool4d.app instead of file-by-file signing. Set to 'true' to enable bundle signing."
+    required: false
+    default: "false"
   entitlements-file:
     description: "Path of entitlement files to sign (if not defined use default one)"
     required: false
@@ -130,6 +134,7 @@ runs:
           "outputDirectory":"${{ inputs.output-directory }}",
           "signCertificate":"${{ inputs.sign-certificate }}",
           "signFiles":"${{ inputs.sign-files }}",
+          "signAsBundle":"${{ inputs.sign-as-bundle }}",
           "entitlementsFile":"${{ inputs.entitlements-file }}",
           "archiveName":"${{ inputs.archive-name }}",
           "beforeBuild":"${{ inputs.before-build }}",
