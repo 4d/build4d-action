@@ -1074,7 +1074,7 @@ Function sign() : Object
 	var $pathToSign : Text
 	If (This:C1470.config.signAsBundle)
 		// Sign the .4dbase directory (bundle), not its contents
-		$pathToSign:=$baseFolder.path
+		$pathToSign:=$baseFolder.parent.path
 		Storage:C1525.github.notice("Sign bundle: "+$pathToSign)
 	Else 
 		// Traditional signing targets the base folder path
