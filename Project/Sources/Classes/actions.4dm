@@ -463,7 +463,7 @@ Function _fCheckTargetName($object : Object)
 		: (Not:C34(Value type:C1509($object.value)=Is text:K8:3))
 			$object.result:=Null:C1517
 		: ($object.value="current")
-			$object.result:=(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
+			$object.result:=(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic"
 		: (($object.value="x86_64") || ($object.value="x86-64") || ($object.value="x64") || ($object.value="AMD64") || ($object.value="Intel 64"))
 			$object.result:="x86_64_generic"
 		: ($object.value="arm64")
@@ -643,7 +643,7 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	End if 
 	
 	var $options : Object
-	$options:=New object:C1471("targets"; New collection:C1472(String:C10(Get system info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
+	$options:=New object:C1471("targets"; New collection:C1472(String:C10(System info:C1571().processor)="Apple@") ? "arm64_macOS_lib" : "x86_64_generic")
 	
 	This:C1470._addDepFromFolder($base.folder("Components"); $options; $temp4DZs)
 	
@@ -1024,7 +1024,7 @@ Function sign() : Object
 		// SignApp.sh <certificate> <path> <entitlements>
 		$cmdPrefix:="\""+$signScriptFile.path+"\" \""+$certificateName+"\" "
 		$cmdSuffix:=" \""+$entitlementsFile.path+"\""
-	End if
+	End if 
 	
 	// Sign base
 	
@@ -1076,6 +1076,9 @@ Function sign() : Object
 		// Sign the .4dbase directory (bundle), not its contents
 		$pathToSign:=$baseFolder.parent.path
 		Storage:C1525.github.notice("Sign bundle: "+$pathToSign)
+		
+		This:C1470._cleanDatabase($baseFolder)
+		
 	Else 
 		// Traditional signing targets the base folder path
 		$pathToSign:=$baseFolder.path
@@ -1180,6 +1183,10 @@ Function archive() : Object
 	return $status
 	
 Function _cleanDatabase($base : 4D:C1709.Folder)
+	If (Bool:C1537(This:C1470._hasClean))
+		return 
+	End if 
+	This:C1470._hasClean:=True:C214
 	
 	var $file : 4D:C1709.File
 	var $folder : 4D:C1709.Folder
