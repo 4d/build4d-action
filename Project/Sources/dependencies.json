@@ -1,7 +1,4 @@
 {
 	"version": 2120,
-	"dependencies": {
-		"Build4D": {},
-		"4D QPDF": {}
-	}
+	"dependencies": {}
 }

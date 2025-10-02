@@ -1018,7 +1018,7 @@ Function sign() : Object
 	
 	If (This:C1470.config.signAsBundle)
 		// app_sign_pack_notarize.sh sign <path> <entitlements_file> <certificate>
-		$cmdPrefix:="sign \""+$signScriptFile.path+"\" "
+		$cmdPrefix:="\""+$signScriptFile.path+"\" sign "
 		$cmdSuffix:=" \""+$entitlementsFile.path+"\" \""+$certificateName+"\""
 	Else 
 		// SignApp.sh <certificate> <path> <entitlements>
