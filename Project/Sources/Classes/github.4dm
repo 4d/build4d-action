@@ -101,7 +101,9 @@ End if */
 	If ($env["GITHUB_EVENT_PATH"]#Null:C1517)
 		var $eventFile : 4D:C1709.File
 		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10($env["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10($env["GITHUB_EVENT_PATH"]))
-		$env.event:=JSON Parse:C1218($eventFile.getText())
+		If ($eventFile.exists)
+			$env.event:=Try(JSON Parse:C1218($eventFile.getText()))
+		End if 
 	End if 
 	
 /*Use (This)
