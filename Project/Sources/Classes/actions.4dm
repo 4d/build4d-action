@@ -1301,7 +1301,11 @@ Function run() : Object
 					Storage:C1525.github.notice("action "+$action)
 					Storage:C1525.github.debug("⚡ Executing action: "+$action)
 					$status[$action]:=This:C1470[$action].call(This:C1470)
-					Storage:C1525.github.debug("✅ Action "+$action+" completed with result: "+JSON Stringify:C1217($status[$action]))
+					
+					If (Storage:C1525.github.isDebug)
+						Storage:C1525.github.debug("✅ Action "+$action+" completed with result: "+This:C1470._debugResult($status[$action]))
+					End if 
+					
 					$status.success:=$status.success & Bool:C1537($status[$action].success)
 					If (Not:C34($status.success))
 						Storage:C1525.github.debug("❌ Action "+$action+" failed, stopping execution chain")
@@ -1314,9 +1318,60 @@ Function run() : Object
 			
 	End case 
 	
-	Storage:C1525.github.debug("🏁 Action execution completed. Final status: "+JSON Stringify:C1217($status))
+	If (Storage:C1525.github.isDebug)
+		Storage:C1525.github.debug("🏁 Action execution completed. Final status: "+This:C1470._debugResult($status))
+	End if 
 	
 	return $status
+	
+Function _filterWarnings($object : Object; $depth : Integer)
+	If (($object=Null:C1517) || ($depth<=0))
+		return 
+	End if 
+	
+	var $key : Text
+	For each ($key; $object)
+		Case of 
+			: ($key="errors") && (Value type:C1509($object[$key])=Is collection:K8:32)
+				// Filter out items where isError=false
+				$object[$key]:=$object[$key].query("isError = :1"; True:C214)
+				
+				// Recursively filter nested objects in errors
+				var $error : Object
+				For each ($error; $object[$key])
+					This:C1470._filterWarnings($error; $depth-1)
+				End for each 
+				
+			: (Value type:C1509($object[$key])=Is object:K8:27)
+				// Recursively process nested objects
+				This:C1470._filterWarnings($object[$key]; $depth-1)
+				
+			: (Value type:C1509($object[$key])=Is collection:K8:32)
+				// Process items in collections
+				var $item : Variant
+				For each ($item; $object[$key])
+					If (Value type:C1509($item)=Is object:K8:27)
+						This:C1470._filterWarnings($item; $depth-1)
+					End if 
+				End for each 
+				
+			// Else Keep all other properties (text, boolean, integer, etc.) as-is
+				
+		End case 
+	End for each 
+	
+Function _debugResult($object : Object) : Text
+	If (This:C1470.config.ignoreWarnings)
+		$cleaned:=OB Copy:C1225($object)
+		
+		// Remove isError:false items from errors collections recursively
+		This:C1470._filterWarnings($cleaned; 3)
+		
+		return JSON Stringify:C1217($cleaned)
+		
+	End if 
+	
+	return JSON Stringify:C1217($object)
 	
 Function _checkActions($actions : Collection) : Collection
 	
