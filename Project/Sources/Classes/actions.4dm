@@ -1416,6 +1416,7 @@ Function _executeHook($label : Text)
 	End if 
 	
 	Storage:C1525.github.info("Executing command: "+$label)
+	Storage:C1525.github.debug($command)
 	
 	var $worker : 4D:C1709.SystemWorker
 	var $options : Object
@@ -1442,7 +1443,6 @@ Function _executeHook($label : Text)
 	// Wait for completion and get results
 	If ($worker=Null:C1517)
 		Storage:C1525.github.error("❌ Command cannot be launched.")
-		Storage:C1525.github.debug("Command used "+$command)
 		return 
 	End if 
 	
@@ -1451,15 +1451,15 @@ Function _executeHook($label : Text)
 	// Report results
 	If ($worker.terminated)
 		If ($worker.exitCode=0)
-			Storage:C1525.github.info("✅ Command executed successfully")
-			If (Length:C16($worker.response)>0)
-				Storage:C1525.github.info("Command output: "+$worker.response)
-			End if 
+			Storage:C1525.github.info("✅ Command executed successfully (exitCode: 0)")
 		Else 
 			Storage:C1525.github.error("❌ Command failed with exit code: "+String:C10($worker.exitCode))
-			If (Length:C16($worker.responseError)>0)
-				Storage:C1525.github.error("Command error: "+$worker.responseError)
-			End if 
+		End if 
+		If (Length:C16($worker.response)>0)
+			Storage:C1525.github.info("Command output: "+$worker.response)
+		End if 
+		If (Length:C16($worker.responseError)>0)
+			Storage:C1525.github.error("Command error: "+$worker.responseError)
 		End if 
 	Else 
 		Storage:C1525.github.error("❌ Command did not complete")
