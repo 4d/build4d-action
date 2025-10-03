@@ -1429,9 +1429,20 @@ Function _executeHook($label : Text)
 	
 	// Add environment variables
 	$options.variables:=This:C1470._getEnv()
-	$options.variables.BUILD_OUTPUT_DIR:=This:C1470.config.outputDirectory#Null:C1517 ? String:C10(This:C1470.config.outputDirectory.path) : ""
-	$options.variables.BUILD_PROJECT_PATH:=This:C1470.config.file#Null:C1517 ? String:C10(This:C1470.config.file.path) : ""
-	$options.variables.BUILD_PROJECT_NAME:=This:C1470.config.file#Null:C1517 ? This:C1470.config.file.name : ""
+	$options.variables.BUILD_OUTPUT_DIR:=""
+	$options.variables.BUILD_PROJECT_PATH:=""
+	$options.variables.BUILD_PROJECT_NAME:=""
+	
+	If (This:C1470.config.outputDirectory#Null:C1517)
+		$options.variables.BUILD_OUTPUT_DIR:=String:C10(This:C1470.config.outputDirectory.path)
+	End if 
+	
+	If (This:C1470.config.file#Null:C1517)
+		$options.variables.BUILD_OUTPUT_DIR+=This:C1470.config.file.name+".4dbase"
+		$options.variables.BUILD_PROJECT_PATH:=String:C10(This:C1470.config.file.path)
+		$options.variables.BUILD_PROJECT_NAME:=String:C10(This:C1470.config.file.name)
+	End if 
+	
 	$options.variables.BUILD_STEP:=String:C10($label)
 	
 	$options.variables.FOURD_PATH:=This:C1470._Get4DPath()
