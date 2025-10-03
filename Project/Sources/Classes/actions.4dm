@@ -1355,13 +1355,14 @@ Function _filterWarnings($object : Object; $depth : Integer)
 					End if 
 				End for each 
 				
-			// Else Keep all other properties (text, boolean, integer, etc.) as-is
+				// Else Keep all other properties (text, boolean, integer, etc.) as-is
 				
 		End case 
 	End for each 
 	
 Function _debugResult($object : Object) : Text
 	If (This:C1470.config.ignoreWarnings)
+		var $cleaned : Object
 		$cleaned:=OB Copy:C1225($object)
 		
 		// Remove isError:false items from errors collections recursively
