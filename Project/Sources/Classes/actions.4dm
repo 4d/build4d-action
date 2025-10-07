@@ -1074,7 +1074,8 @@ Function sign() : Object
 	var $pathToSign : Text
 	If (This:C1470.config.signAsBundle)
 		// Sign the .4dbase directory (bundle), not its contents
-		$pathToSign:=$baseFolder.parent.path
+		$pathToSign:=Folder:C1567($baseFolder.parent.platformPath; fk platform path:K87:2).path
+		$pathToSign:=Delete string:C232($pathToSign; Length:C16($pathToSign); 1)  // remove trailing / (script do not support well in old tool4d version)
 		Storage:C1525.github.notice("Sign bundle: "+$pathToSign)
 		
 		This:C1470._cleanDatabase($baseFolder)
