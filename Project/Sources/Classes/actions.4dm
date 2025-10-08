@@ -1237,19 +1237,20 @@ Function notarize() : Object
 	
 	Storage:C1525.github.debug("Checking if notary profile exists: "+$notaryProfile)
 	
-	// Check if the notary profile exists in keychain
+	// Check if the notary profile exists in keychain using history command
 	var $checkCmd : Text
-	$checkCmd:="xcrun notarytool store-credentials --list"
+	$checkCmd:="xcrun notarytool history --keychain-profile \""+$notaryProfile+"\""
 	
 	var $checkWorker : 4D:C1709.SystemWorker
 	$checkWorker:=4D:C1709.SystemWorker.new($checkCmd).wait()
 	
 	var $profileExists : Boolean
-	$profileExists:=False:C215
+	$profileExists:=($checkWorker.exitCode=0)
 	
-	If (($checkWorker.response#Null:C1517) && (Length:C16($checkWorker.response)>0))
-		Storage:C1525.github.debug("Available notary profiles: "+$checkWorker.response)
-		$profileExists:=(Position:C15($notaryProfile; $checkWorker.response)>0)
+	If ($profileExists)
+		Storage:C1525.github.debug("✓ Notary profile '"+$notaryProfile+"' found")
+	Else 
+		Storage:C1525.github.debug("✗ Notary profile '"+$notaryProfile+"' not found (exit code: "+String:C10($checkWorker.exitCode)+")")
 	End if 
 	
 	If (Not:C34($profileExists))
