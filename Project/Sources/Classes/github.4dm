@@ -83,7 +83,11 @@ Function getEvent($env : Object) : Object
 		var $eventFile : 4D:C1709.File
 		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10($env["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10($env["GITHUB_EVENT_PATH"]))
 		If ($eventFile.exists)
-			$event:=Try(JSON Parse:C1218($eventFile.getText()))
+			var $methodOnError : Text
+			$methodOnError:=Method called on error:C704()
+			ON ERR CALL:C155("noError")  // no Try (compatible with v20
+			$event:=JSON Parse:C1218($eventFile.getText())
+			ON ERR CALL:C155($methodOnError)
 		End if 
 	End if 
 	return $event
