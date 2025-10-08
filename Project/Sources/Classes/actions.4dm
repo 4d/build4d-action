@@ -1185,6 +1185,130 @@ Function archive() : Object
 	
 	return $status
 	
+	// MARK:- notarize
+	
+Function notarize() : Object
+	Storage:C1525.github.debug("🔒 Starting notarize process")
+	
+	var $status : Object
+	$status:=New object:C1471("success"; True:C214)
+	
+	If (Not:C34(Is macOS:C1572))
+		Storage:C1525.github.warning("Notarization ignored on this OS")
+		return $status
+	End if 
+	
+	// Check if we actually signed something
+	If ((This:C1470.config.signCertificate=Null:C1517) || (Length:C16(String:C10(This:C1470.config.signCertificate))=0))
+		Storage:C1525.github.info("Notarization skipped - no signing certificate was used")
+		return $status
+	End if 
+	
+	var $baseFolder : 4D:C1709.Folder
+	$baseFolder:=This:C1470._baseFolder()
+	
+	// Get the archive file name
+	var $archiveFile : 4D:C1709.File
+	If (Bool:C1537(This:C1470.config.outputUseContents))
+		$archiveFile:=$baseFolder.parent.parent.file(This:C1470.archiveName())
+	Else 
+		$archiveFile:=$baseFolder.parent.file(This:C1470.archiveName())
+	End if 
+	
+	If (Not:C34($archiveFile.exists))
+		Storage:C1525.github.error("Archive file not found: "+$archiveFile.path)
+		return New object:C1471("success"; False:C215; "errors"; New collection:C1472("Archive file not found"))
+	End if 
+	
+	// Get environment variables
+	var $env : Object
+	$env:=This:C1470._getEnv()
+	
+	// Check if notary profile is configured
+	var $notaryProfile : Text
+	var $notaryProfileDefined : Boolean
+	$notaryProfileDefined:=($env["NOTARY_PROFILE"]#Null:C1517) && (Length:C16(String:C10($env["NOTARY_PROFILE"]))>0)
+	
+	If ($notaryProfileDefined)
+		$notaryProfile:=String:C10($env["NOTARY_PROFILE"])
+	Else 
+		$notaryProfile:="notary4d"  // Default profile name
+	End if 
+	
+	Storage:C1525.github.debug("Checking if notary profile exists: "+$notaryProfile)
+	
+	// Check if the notary profile exists in keychain
+	var $checkCmd : Text
+	$checkCmd:="xcrun notarytool store-credentials --list"
+	
+	var $checkWorker : 4D:C1709.SystemWorker
+	$checkWorker:=4D:C1709.SystemWorker.new($checkCmd).wait()
+	
+	var $profileExists : Boolean
+	$profileExists:=False:C215
+	
+	If (($checkWorker.response#Null:C1517) && (Length:C16($checkWorker.response)>0))
+		Storage:C1525.github.debug("Available notary profiles: "+$checkWorker.response)
+		$profileExists:=(Position:C15($notaryProfile; $checkWorker.response)>0)
+	End if 
+	
+	If (Not:C34($profileExists))
+		If ($notaryProfileDefined)
+			// Profile was explicitly defined but doesn't exist - this is an error
+			Storage:C1525.github.error("❌ Notary profile '"+$notaryProfile+"' not found in keychain")
+			Storage:C1525.github.error("Available profiles can be listed with: xcrun notarytool store-credentials --list")
+			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("Notary profile '"+$notaryProfile+"' not found"))
+		Else 
+			// No profile defined and default doesn't exist - just warn and skip
+			Storage:C1525.github.warning("⚠️ Notary profile '"+$notaryProfile+"' not found in keychain - skipping notarization")
+			Storage:C1525.github.info("To enable notarization, set up a profile with: xcrun notarytool store-credentials")
+			return $status
+		End if 
+	End if 
+	
+	Storage:C1525.github.info("Submitting archive for notarization: "+$archiveFile.name)
+	Storage:C1525.github.debug("Using notary profile: "+$notaryProfile)
+	
+	// Build notarytool command (no pipe redirection)
+	var $cmd : Text
+	$cmd:="xcrun notarytool submit \""+$archiveFile.path+"\" --keychain-profile \""+$notaryProfile+"\" --wait"
+	
+	Storage:C1525.github.debug("Executing: "+$cmd)
+	
+	// Execute notarization
+	var $worker : 4D:C1709.SystemWorker
+	$worker:=4D:C1709.SystemWorker.new($cmd).wait()
+	
+	// Get the combined output for analysis
+	var $output : Text
+	$output:=""
+	
+	If (($worker.response#Null:C1517) && (Length:C16($worker.response)>0))
+		$output:=$worker.response
+		Storage:C1525.github.info($worker.response)
+	End if 
+	
+	If (($worker.responseError#Null:C1517) && (Length:C16($worker.responseError)>0))
+		$output:=$output+Char:C90(Line feed:K15:40)+$worker.responseError
+		Storage:C1525.github.info($worker.responseError)
+	End if 
+	
+	Storage:C1525.github.debug("Notarization output: "+$output)
+	
+	// Check the output for success
+	If (Position:C15("status: Accepted"; $output)>0)
+		Storage:C1525.github.info("✅ Notarize Success")
+		$status.success:=True:C214
+	Else 
+		Storage:C1525.github.error("❌ Notarize Failed")
+		$status.success:=False:C215
+		$status.errors:=New collection:C1472("Notarization was not accepted")
+	End if 
+	
+	Storage:C1525.github.debug(JSON Stringify:C1217($status))
+	
+	return $status
+	
 Function _cleanDatabase($base : 4D:C1709.Folder)
 	If (Bool:C1537(This:C1470._hasClean))
 		return 
@@ -1380,7 +1504,7 @@ Function _debugResult($object : Object) : Text
 Function _checkActions($actions : Collection) : Collection
 	
 	var $releaseActions : Collection
-	$releaseActions:=New collection:C1472("clean"; "build"; "pack"; "sign"; "archive")
+	$releaseActions:=New collection:C1472("clean"; "build"; "pack"; "sign"; "archive"; "notarize")
 	If ($actions.includes("release"))
 		return $releaseActions
 	End if 
