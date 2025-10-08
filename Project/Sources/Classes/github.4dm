@@ -71,10 +71,10 @@ Function temporaryFolder() : 4D:C1709.Folder
 		return Folder:C1567(Temporary folder:C486; fk platform path:K87:2)
 	End if 
 	
-Function getEvent($env : Object)->$event : Object
+Function getEvent($env : Object) : Object
 	// Get GitHub event from environment or read from event file
 	// If $env is null, use GetEnv method to get environment variables
-	
+	var $event : Object
 	If ($env=Null:C1517)
 		$env:=GetEnv
 	End if 
@@ -86,6 +86,7 @@ Function getEvent($env : Object)->$event : Object
 			$event:=Try(JSON Parse:C1218($eventFile.getText()))
 		End if 
 	End if 
+	return $event
 	
 Function getReleaseTag($env : Object) : Variant
 	// Get release tag from GitHub event
