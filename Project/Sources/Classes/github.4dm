@@ -62,54 +62,56 @@ Function cmd($cmd : Text; $message : Text; $level : Integer/*0 default = info*/;
 	
 Function temporaryFolder() : 4D:C1709.Folder
 	var $tempPath : Text
-	$tempPath:=String:C10(This:C1470._parseEnv()["RUNNER_TEMP"])  // maybe extract parse env
+	var $env : Object
+	$env:=GetEnv  // Use GetEnv directly
+	$tempPath:=String:C10($env["RUNNER_TEMP"])
 	If (Length:C16($tempPath)>0)
 		return Is Windows:C1573 ? Folder:C1567($tempPath; fk platform path:K87:2) : Folder:C1567($tempPath)
 	Else 
 		return Folder:C1567(Temporary folder:C486; fk platform path:K87:2)
 	End if 
 	
-Function _parseEnv()->$env : Object
-/*If (This._envCache#Null)
-return This._envCache
-End if */
+Function getEvent($env : Object)->$event : Object
+	// Get GitHub event from environment or read from event file
+	// If $env is null, use GetEnv method to get environment variables
 	
-	$env:=New object:C1471
-	var $pos : Integer
-	var $line : Text
-	var $in; $out; $err : Text
-	
-	If (Is Windows:C1573)
-		SET ENVIRONMENT VARIABLE:C812("_4D_OPTION_HIDE_CONSOLE"; "true")
+	If ($env=Null:C1517)
+		$env:=GetEnv
 	End if 
-	
-	LAUNCH EXTERNAL PROCESS:C811((Is Windows:C1573) ? "cmd /C SET" : "/usr/bin/env"; $in; $out; $err)
-	
-	For each ($line; Split string:C1554($out; ((Is Windows:C1573) ? Char:C90(Carriage return:K15:38) : "")+Char:C90(Line feed:K15:40); sk ignore empty strings:K86:1))
-		$pos:=Position:C15("="; $line)
-		If ($pos>0)
-			$env[Substring:C12($line; 1; $pos-1)]:=Substring:C12($line; $pos+1)
-			If (Is Windows:C1573 && (Length:C16($line)>0) && ($line[[1]]="'") && ($line[[Length:C16($line)]]="'"))  //  if window, remove  leading and trailig quote '
-				$env[Substring:C12($line; 1; $pos-1)]:=Substring:C12($line; $pos+2; Length:C16($line)-$pos-2)
-			End if 
-		Else 
-			$env[$line]:=""
-		End if 
-	End for each 
-	
 	
 	If ($env["GITHUB_EVENT_PATH"]#Null:C1517)
 		var $eventFile : 4D:C1709.File
 		$eventFile:=(Is Windows:C1573) ? File:C1566(String:C10($env["GITHUB_EVENT_PATH"]); fk platform path:K87:2) : File:C1566(String:C10($env["GITHUB_EVENT_PATH"]))
 		If ($eventFile.exists)
-			$env.event:=Try(JSON Parse:C1218($eventFile.getText()))
+			$event:=Try(JSON Parse:C1218($eventFile.getText()))
 		End if 
 	End if 
 	
-/*Use (This)
-This._envCache:=OB Copy($env; ck shared)
-End use */
+Function getReleaseTag($env : Object) : Variant
+	// Get release tag from GitHub event
+	// Returns the tag_name from release event or empty string if not found
 	
+	var $event : Object
+	$event:=This:C1470.getEvent($env)
+	
+	If ($event#Null:C1517) && ($event.release#Null:C1517) && ($event.release.tag_name#Null:C1517)
+		return String:C10($event.release.tag_name)
+	End if 
+	
+	return Null:C1517
+	
+Function getEnv($includeEvent : Boolean) : Object
+	// Get environment variables, optionally including GitHub event data
+	// This provides a cleaner interface than _parseEnv which is legacy
+	
+	var $env : Object
+	$env:=GetEnv  // Use the standalone GetEnv method
+	
+	If (Bool:C1537($includeEvent))
+		$env.event:=This:C1470.getEvent($env)
+	End if 
+	
+	return $env
 	
 	// MARK:- file
 Function addEnv($key : Text; $value : Text)
@@ -129,7 +131,7 @@ Function setSummary($markdown : Text)
 	
 Function _write($key : Text; $value : Text; $replace : Boolean)
 	var $env : Object
-	$env:=This:C1470._parseEnv()
+	$env:=GetEnv  // Use GetEnv directly, no need for event data here
 	
 	var $filePath : Text
 	var $file : 4D:C1709.File
@@ -159,12 +161,12 @@ Function _write($key : Text; $value : Text; $replace : Boolean)
 	
 Function isRelease() : Boolean
 	var $env : Object
-	$env:=This:C1470._parseEnv()
+	$env:=GetEnv  // Use GetEnv directly for efficiency
 	return (String:C10($env["GITHUB_EVENT_NAME"])="release")
 	
 Function postArtefactToRelease($artefact : 4D:C1709.File)->$result : Object
 	var $env : Object
-	$env:=This:C1470._parseEnv()
+	$env:=This:C1470.getEnv(True:C214)  // Include event data
 	
 	Case of 
 		: (String:C10($env["GITHUB_EVENT_NAME"])#"release")

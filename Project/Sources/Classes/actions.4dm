@@ -963,10 +963,12 @@ Function sign() : Object
 		// Use app_sign_pack_notarize.sh from tool4D.app
 		$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/app_sign_pack_notarize.sh")
 		If (Not:C34($signScriptFile.exists))
-			Storage:C1525.github.error("No app_sign_pack_notarize.sh script found in tool4d.app")
-			return New object:C1471("success"; False:C215; "errors"; New collection:C1472("No app_sign_pack_notarize.sh script"))
+			Storage:C1525.github.warning("No app_sign_pack_notarize.sh script found in tool4d.app, falling back to traditional signing")
+			This:C1470.config.signAsBundle:=False:C215
 		End if 
-	Else 
+	End if 
+	
+	If (Not:C34(This:C1470.config.signAsBundle))
 		// Use traditional SignApp.sh
 		$signScriptFile:=Folder:C1567(Application file:C491; fk platform path:K87:2).file("Contents/Resources/SignApp.sh")
 		If (Not:C34($signScriptFile.exists))
@@ -1448,6 +1450,12 @@ Function _executeHook($label : Text)
 	
 	$options.variables.FOURD_PATH:=This:C1470._Get4DPath()
 	$options.variables.TOOL4D_PATH:=$options.variables.FOURD_PATH  // even if not tool we pass, must work
+	
+	If ($options.variables.RELEASE_TAG=Null:C1517)
+		// try to read from github event
+		$options.variables.RELEASE_TAG:=Storage:C1525.github.getReleaseTag($options.variables)
+		
+	End if 
 	
 	// Execute the command
 	$worker:=4D:C1709.SystemWorker.new($command; $options)

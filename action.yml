@@ -50,9 +50,9 @@ inputs:
     required: false
     default: ""
   sign-as-bundle:
-    description: "Sign as bundle using app_sign_pack_notarize.sh from tool4d.app instead of file-by-file signing. Set to 'true' to enable bundle signing."
+    description: "Sign as bundle using app_sign_pack_notarize.sh from tool4d.app instead of file-by-file signing. Set to 'false' to disable bundle signing. If set to 'true' but app_sign_pack_notarize.sh is not found, automatically falls back to file-by-file signing."
     required: false
-    default: "false"
+    default: "true"
   entitlements-file:
     description: "Path of entitlement files to sign (if not defined use default one)"
     required: false

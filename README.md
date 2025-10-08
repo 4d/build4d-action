@@ -105,6 +105,7 @@ To sign add the action
 then you must specify the certificate name that you install in a previous step (using Github secret for instance)
 - `sign-certificate`: name of the certificate, could be the full name or a part of it (for instance "Developer ID" for "Developer ID of MyFirm")
 - `sign-files`: list of files paths relative to the base that must be signe too (for instance some binaries in resources). (pattern or folder are not supported)
+- `sign-as-bundle`: sign as bundle using `app_sign_pack_notarize.sh` from tool4d.app instead of file-by-file signing (default: true). If set to true but the script is not found, automatically falls back to traditional signing
 - `entitlements-file`: if do not want to use default one provide a path for a custom entitlements file
 
 ```yaml
