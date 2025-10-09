@@ -1156,7 +1156,7 @@ Function archive() : Object
 	If (Is macOS:C1572)
 		var $cmd : Text
 		
-		$cmd:="ditto -ckX --rsrc --keepParent --zlibCompressionLevel 9 \""+$baseFolder.path+"\" \""+$archiveFile.path+"\""
+		$cmd:="ditto -ckX --rsrc --keepParent --sequesterRsrc --zlibCompressionLevel 9 \""+$baseFolder.path+"\" \""+$archiveFile.path+"\""
 		
 		var $worker : 4D:C1709.SystemWorker
 		$worker:=4D:C1709.SystemWorker.new($cmd).wait()
