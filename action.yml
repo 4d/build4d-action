@@ -80,11 +80,11 @@ inputs:
   product-line:
     description: 'tool4d product line'
     required: false
-    default: "20.x"
+    default: "21.x"
   version:
     description: 'tool4d version'
     required: false
-    default: "20.7"
+    default: "21.0"
   build:
     description: 'tool4d build number'
     required: false
@@ -120,7 +120,7 @@ runs:
         echo "TMP=$MY_RUNNER_TMP"
         echo "ERROR_FLAG=$MY_RUNNER_TMP/error_flag" >> $GITHUB_ENV
     - id: tool4d
-      uses: 4d/tool4d-action@v3.4
+      uses: 4d/tool4d-action@v3.5
       env:
         GITHUB_THIS_ACTION_PATH: ${{ github.action_path }}
       with:
