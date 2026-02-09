@@ -36,16 +36,16 @@ Function setSecret($secret : Text)
 	This:C1470.cmd("add-mask"; $secret)
 	
 	// MARK:- group
-Function startGroup($name : Text)
-	This:C1470.cmd("group"; $name)
+Function startGroup($name : Text; $level : Integer)
+	This:C1470.cmd("group"; $name; $level)
 	
-Function endGroup()
-	This:C1470.cmd("endgroup"; "")
+Function endGroup($level : Integer)
+	This:C1470.cmd("endgroup"; ""; $level)
 	
-Function group($name : Text; $formula : 4D:C1709.Function)
-	This:C1470.startGroup($name)
+Function group($name : Text; $formula : 4D:C1709.Function; $level : Integer)
+	This:C1470.startGroup($name; $level)
 	$formula.call()  // waiting promise will be cool...
-	This:C1470.endGroup()
+	This:C1470.endGroup($level)
 	
 	// MARK:- command
 	// https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions

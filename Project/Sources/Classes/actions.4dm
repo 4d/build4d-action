@@ -408,14 +408,14 @@ Function build()->$status : Object
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
 		
-		Storage:C1525.github.startGroup("Compilation errors")
+		Storage:C1525.github.startGroup("Compilation errors"; Error message:K38:3)
 		
 		var $error : Object
 		For each ($error; $status.errors)
 			This:C1470._reportCompilationError($error)
 		End for each 
 		
-		Storage:C1525.github.endGroup()
+		Storage:C1525.github.endGroup(Error message:K38:3)
 		
 	End if 
 	
@@ -653,14 +653,14 @@ Function _checkCompile($base : 4D:C1709.Folder; $temp4DZs : Collection)->$status
 	// report errors
 	If (($status.errors#Null:C1517) && ($status.errors.length>0))
 		
-		Storage:C1525.github.startGroup("Compilation errors - "+String:C10($projectFile.name))
+		Storage:C1525.github.startGroup("Compilation errors - "+String:C10($projectFile.name); Error message:K38:3)
 		
 		var $error : Object
 		For each ($error; $status.errors)
 			This:C1470._reportCompilationError($error)
 		End for each 
 		
-		Storage:C1525.github.endGroup()
+		Storage:C1525.github.endGroup(Error message:K38:3)
 		
 	End if 
 	
@@ -1609,4 +1609,5 @@ Function _executeHook($label : Text)
 	Else 
 		Storage:C1525.github.error("❌ Command did not complete")
 	End if 
+	
 	
