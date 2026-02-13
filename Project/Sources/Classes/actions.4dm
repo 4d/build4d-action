@@ -359,9 +359,28 @@ Function build()->$status : Object
 		return $status
 	End if 
 	
+	// Backup syntaxEN.json before compilation if generateSyntaxFile is explicitly False (Compile project removes it)
+	var $syntaxFile; $syntaxBackup : 4D:C1709.File
+	$syntaxFile:=This:C1470.config.file.parent.parent.folder("Resources").folder("en.lproj").file("syntaxEN.json")
+	If (($syntaxFile.exists) && (This:C1470.config.options.generateSyntaxFile=False:C215))
+		$syntaxBackup:=Folder:C1567(Temporary folder:C486; fk platform path:K87:2).file("syntaxEN.json.backup")
+		$syntaxFile.copyTo(Folder:C1567(Temporary folder:C486; fk platform path:K87:2); "syntaxEN.json.backup"; fk overwrite:K87:5)
+		Storage:C1525.github.debug("📄 Backed up syntaxEN.json before compilation")
+	End if
+
 	Storage:C1525.github.debug("⚙️ Calling Compile project for '"+This:C1470.config.file.path+"' with option "+JSON Stringify:C1217(This:C1470.config.options)+"...")
 	$status:=Compile project:C1760(This:C1470.config.file; This:C1470.config.options)
 	Storage:C1525.github.debug("📊 Compilation result: success="+String:C10($status.success)+", errors="+String:C10($status.errors.length))
+
+	// Restore syntaxEN.json if it was backed up
+	If (($syntaxBackup#Null:C1517) && ($syntaxBackup.exists))
+		If (Not:C34($syntaxFile.parent.exists))
+			$syntaxFile.parent.create()
+		End if
+		$syntaxBackup.copyTo($syntaxFile.parent; "syntaxEN.json"; fk overwrite:K87:5)
+		$syntaxBackup.delete()
+		Storage:C1525.github.debug("📄 Restored syntaxEN.json after compilation")
+	End if
 	
 	// clean temp 4dz
 	For each ($dependencyFile; $temp4DZs)
