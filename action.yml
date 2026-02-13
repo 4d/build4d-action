@@ -25,6 +25,10 @@ inputs:
     description: "\"reset\" or \"append\" to generate typing methods.\nIf value is \"append\", existing variable declarations won't be modified (compiler window behavior).\nIf value is \"reset\" existing variable declarations are removed beforehand."
     required: false
     default: ""
+  generate-syntax-file:
+    description: "To generate a syntax file for code https://developer.4d.com/docs/settings/general) in the Resources\en.lproj folder of the project"
+    required: false
+    default: ""
   ignore-warnings:
     description: "Never display compilation warnings."
     required: false
@@ -141,7 +145,7 @@ runs:
           "afterBuild":"${{ inputs.after-build }}",
           "alwaysRunAfterBuild":"${{ inputs.always-run-after-build }}",
           "stripTests":"${{ inputs.strip-tests }}",
-          "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
+          "options": "{ \"generateTypingMethods\": \"${{ inputs.generate-typing-methods }}\", \"generateSymbols\": \"${{ inputs.generate-symbols }}\", \"generateSyntaxFile\": \"${{ inputs.generate-syntax-file }}\", \"typeInferences\": \"${{ inputs.type-inference }}\", \"targets\": \"${{ inputs.targets }}\" }" , 
           "debug": ${{ env.RUNNER_DEBUG }}, "ignoreWarnings": "${{ inputs.ignore-warnings }}", "failOnWarning": "${{ inputs.fail-on-warning }}", "errorFlag": "${{ env.ERROR_FLAG }}" }'
         startup-method: main
         error-flag: "${{env.ERROR_FLAG}}"

@@ -433,7 +433,11 @@ Function _checkCompilationOptions($options : Variant) : Object
 	
 	If ($options.generateSymbols#Null:C1517)
 		$options.generateSymbols:=isTruthly($options.generateSymbols)
-	End if 
+	End if
+
+	If ($options.generateSyntaxFile#Null:C1517)
+		$options.generateSyntaxFile:=isTruthly($options.generateSyntaxFile)
+	End if
 	
 	If ($options.typeInferences#Null:C1517)
 		If (Not:C34(New collection:C1472("none"; "all"; "locals").includes($options.typeInferences)))
