@@ -13,6 +13,6 @@ jobs:
       contents: write # for asset upload
     steps:
       - name: ⬇️ Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Build
         uses: 4d/build4d-action@main
