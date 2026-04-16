@@ -1620,6 +1620,12 @@ Function _executeHook($label : Text)
 	If ($worker.terminated)
 		If ($worker.exitCode=0)
 			Storage:C1525.github.info("✅ Command executed successfully (exitCode: 0)")
+			If (Length:C16($worker.response)>0)
+				Storage:C1525.github.debug("Command output: "+$worker.response)
+			End if 
+			If (Length:C16($worker.responseError)>0)
+				Storage:C1525.github.debug("Command error: "+$worker.responseError)
+			End if 
 		Else 
 			Storage:C1525.github.error("❌ Command failed with exit code: "+String:C10($worker.exitCode))
 		End if 
