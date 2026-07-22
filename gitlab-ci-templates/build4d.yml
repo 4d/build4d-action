@@ -1,0 +1,232 @@
+# GitLab CI Template for build4d-action
+# Include this template in your .gitlab-ci.yml to build 4D projects
+#
+# Usage:
+#   include:
+#     - project: '4d/build4d-action'
+#       ref: main
+#       file: '/gitlab-ci-templates/build4d.yml'
+#
+#   build:
+#     extends: .build4d
+#     variables:
+#       BUILD4D_ACTIONS: "build"
+#       BUILD4D_TARGETS: "current"
+
+variables:
+  # Build configuration
+  BUILD4D_PROJECT: ""
+  BUILD4D_TARGETS: ""
+  BUILD4D_TYPE_INFERENCE: "none"
+  BUILD4D_GENERATE_SYMBOLS: "false"
+  BUILD4D_GENERATE_TYPING_METHODS: ""
+  BUILD4D_IGNORE_WARNINGS: "false"
+  BUILD4D_FAIL_ON_WARNING: "false"
+  BUILD4D_ACTIONS: ""
+  BUILD4D_OUTPUT_DIRECTORY: ""
+  BUILD4D_SIGN_CERTIFICATE: ""
+  BUILD4D_SIGN_FILES: ""
+  BUILD4D_SIGN_AS_BUNDLE: "true"
+  BUILD4D_ENTITLEMENTS_FILE: ""
+  BUILD4D_ARCHIVE_NAME: ""
+  BUILD4D_BEFORE_BUILD: ""
+  BUILD4D_AFTER_BUILD: ""
+  BUILD4D_ALWAYS_RUN_AFTER_BUILD: "false"
+  BUILD4D_STRIP_TESTS: "false"
+  
+  # Tool4D configuration (inherited)
+  TOOL4D_PRODUCT_LINE: "21.x"
+  TOOL4D_VERSION: "21.0"
+  TOOL4D_BUILD: "latest"
+  
+  # Internal
+  BUILD4D_ACTION_REF: "main"
+  TOOL4D_ACTION_REF: "main"
+
+# Hidden job for setup
+.build4d-setup:
+  before_script:
+    - |
+      echo "🔧 Setting up build4d environment..."
+      
+      # Detect OS
+      if [[ -z "$RUNNER_OS" ]]; then
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+          export RUNNER_OS="macOS"
+        elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+          export RUNNER_OS="Linux"
+        elif [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+          export RUNNER_OS="Windows"
+        fi
+      fi
+      echo "Runner OS: $RUNNER_OS"
+
+      # Clone actions
+      if [[ ! -d "/tmp/tool4d-action" ]]; then
+        echo "📦 Cloning tool4d-action..."
+        git clone --depth 1 -b "${TOOL4D_ACTION_REF}" https://github.com/4d/tool4d-action.git /tmp/tool4d-action
+      fi
+      
+      if [[ ! -d "/tmp/build4d-action" ]]; then
+        echo "📦 Cloning build4d-action..."
+        git clone --depth 1 -b "${BUILD4D_ACTION_REF}" https://github.com/4d/build4d-action.git /tmp/build4d-action
+      fi
+
+      # Download tool4d
+      echo "⬇️ Downloading tool4d..."
+      cd /tmp/tool4d-action
+      bash download.sh "${TOOL4D_PRODUCT_LINE}" "${TOOL4D_VERSION}" "${TOOL4D_BUILD}" "${DLTK:-${TOOL4D_TOKEN}}"
+      
+      # Set tool4d binary path
+      if [[ "$RUNNER_OS" == "macOS" ]]; then
+        export TOOL4D_BIN="/tmp/tool4d-action/tool4d.app/Contents/MacOS/tool4d"
+      elif [[ "$RUNNER_OS" == "Windows" ]]; then
+        export TOOL4D_BIN="/tmp/tool4d-action/tool4d/tool4d.exe"
+      else
+        export TOOL4D_BIN="/tmp/tool4d-action/tool4d/bin/tool4d"
+      fi
+      
+      cd "${CI_PROJECT_DIR}"
+
+# Main build4d job template
+.build4d:
+  extends: .build4d-setup
+  script:
+    - |
+      echo "🔨 Running build4d..."
+      cd "${CI_PROJECT_DIR}"
+      
+      # Find project if not specified
+      PROJECT="${BUILD4D_PROJECT}"
+      if [[ -z "$PROJECT" ]]; then
+        echo "🔎 Finding 4DProject file..."
+        PROJECT=$(find . -name "*.4DProject" -not -path "./Components/*" | head -n 1)
+      fi
+      
+      if [[ -n "$PROJECT" ]] && [[ ! -f "$PROJECT" ]]; then
+        echo "❌ Project not found: $PROJECT"
+        exit 1
+      fi
+      echo "📂 Project: $PROJECT"
+      
+      # Set error flag path
+      ERROR_FLAG="${CI_PROJECT_DIR}/error_flag"
+      [[ -f "$ERROR_FLAG" ]] && rm "$ERROR_FLAG"
+      
+      # Build options JSON
+      OPTIONS_JSON='{ "generateTypingMethods": "'"${BUILD4D_GENERATE_TYPING_METHODS}"'", "generateSymbols": "'"${BUILD4D_GENERATE_SYMBOLS}"'", "typeInferences": "'"${BUILD4D_TYPE_INFERENCE}"'", "targets": "'"${BUILD4D_TARGETS}"'" }'
+      
+      # Build user param JSON for build4d
+      USER_PARAM=$(cat <<EOF
+      {
+        "path": "$PROJECT",
+        "workingDirectory": "${CI_PROJECT_DIR}",
+        "actions": "${BUILD4D_ACTIONS}",
+        "outputDirectory": "${BUILD4D_OUTPUT_DIRECTORY}",
+        "signCertificate": "${BUILD4D_SIGN_CERTIFICATE}",
+        "signFiles": "${BUILD4D_SIGN_FILES}",
+        "signAsBundle": "${BUILD4D_SIGN_AS_BUNDLE}",
+        "entitlementsFile": "${BUILD4D_ENTITLEMENTS_FILE}",
+        "archiveName": "${BUILD4D_ARCHIVE_NAME}",
+        "beforeBuild": "${BUILD4D_BEFORE_BUILD}",
+        "afterBuild": "${BUILD4D_AFTER_BUILD}",
+        "alwaysRunAfterBuild": "${BUILD4D_ALWAYS_RUN_AFTER_BUILD}",
+        "stripTests": "${BUILD4D_STRIP_TESTS}",
+        "options": $OPTIONS_JSON,
+        "debug": ${RUNNER_DEBUG:-0},
+        "ignoreWarnings": "${BUILD4D_IGNORE_WARNINGS}",
+        "failOnWarning": "${BUILD4D_FAIL_ON_WARNING}",
+        "errorFlag": "$ERROR_FLAG"
+      }
+      EOF
+      )
+      
+      # Minify JSON (remove newlines for passing as argument)
+      USER_PARAM=$(echo "$USER_PARAM" | tr -d '\n' | sed 's/  */ /g')
+      
+      echo "🚀 Running build..."
+      "$TOOL4D_BIN" --project "/tmp/build4d-action/Project/actions.4DProject" \
+        --dataless \
+        --user-param "$USER_PARAM" \
+        --skip-onstartup \
+        --startup-method main
+      
+      EXIT_CODE=$?
+      
+      # Check for errors
+      if [[ $EXIT_CODE -eq 0 ]] && [[ -f "$ERROR_FLAG" ]]; then
+        echo "❌ Build failed with errors"
+        cat "$ERROR_FLAG" 2>/dev/null || true
+        exit 1
+      fi
+      
+      if [[ $EXIT_CODE -ne 0 ]]; then
+        echo "❌ Build failed with exit code $EXIT_CODE"
+        exit $EXIT_CODE
+      fi
+      
+      echo "✅ Build completed successfully"
+  artifacts:
+    paths:
+      - build/
+    expire_in: 1 week
+    when: on_success
+
+# Convenience template for syntax check only
+.build4d-check:
+  extends: .build4d
+  variables:
+    BUILD4D_ACTIONS: ""
+    BUILD4D_TARGETS: ""
+
+# Convenience template for compilation
+.build4d-compile:
+  extends: .build4d
+  variables:
+    BUILD4D_ACTIONS: "build"
+    BUILD4D_TARGETS: "current"
+
+# Convenience template for release (compile + pack + sign + archive)
+.build4d-release:
+  extends: .build4d
+  variables:
+    BUILD4D_ACTIONS: "release"
+    BUILD4D_TARGETS: ""
+
+# OS-specific templates
+.build4d-macos:
+  extends: .build4d
+  tags:
+    - macos
+    - shell
+
+.build4d-linux:
+  extends: .build4d
+  tags:
+    - linux
+    - shell
+
+.build4d-windows:
+  extends: .build4d
+  tags:
+    - windows
+    - shell
+
+# Release templates with OS tags
+.build4d-release-macos:
+  extends: .build4d-release
+  tags:
+    - macos
+    - shell
+
+.build4d-release-linux:
+  extends: .build4d-release
+  tags:
+    - linux
+    - shell
+
+.build4d-release-windows:
+  extends: .build4d-release
+  tags:
+    - windows
+    - shell
